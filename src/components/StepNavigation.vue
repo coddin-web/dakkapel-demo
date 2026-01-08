@@ -15,13 +15,21 @@ const STEPS = [
 
 // Computed step states for cleaner template
 const stepStates = computed(() => {
-  return STEPS.map(step => ({
-    ...step,
-    isActive: store.currentStep === step.number,
-    isCompleted: store.isStepCompleted(step.number),
-    isAccessible: store.isStepAccessible(step.number),
-    isDisabled: !store.isStepAccessible(step.number) && store.currentStep !== step.number
-  }))
+  return STEPS.map(step => {
+    const isCompleted = store.isStepCompleted(step.number)
+    const isActive = store.currentStep === step.number
+    // Hide step 5 label until step >= 3, hide completed step labels unless active
+    const showLabel = (step.number !== 5 || store.currentStep >= 3) &&
+                      (!isCompleted || isActive)
+    return {
+      ...step,
+      isActive,
+      isCompleted,
+      isAccessible: store.isStepAccessible(step.number),
+      isDisabled: !store.isStepAccessible(step.number) && store.currentStep !== step.number,
+      showLabel
+    }
+  })
 })
 
 function handleStepClick(stepNumber: number) {
@@ -62,7 +70,7 @@ function handleKeydown(event: KeyboardEvent, stepNumber: number) {
               <span v-if="step.isCompleted" class="checkmark">✓</span>
               <span v-else>{{ step.number }}</span>
             </span>
-            <span class="step-label">{{ step.label }}</span>
+            <span v-if="step.showLabel" class="step-label">{{ step.label }}</span>
           </div>
         </li>
         <li v-if="index < stepStates.length - 1" class="step-connector" aria-hidden="true">

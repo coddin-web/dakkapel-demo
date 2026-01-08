@@ -29,89 +29,62 @@ function handleInput(event: Event) {
 
 <template>
   <div class="dimension-group">
-    <label :for="inputId" class="dimension-label">{{ label }}</label>
-    <div class="input-group">
-      <input
-        :id="inputId"
-        type="number"
-        class="input-field"
-        :value="modelValue"
-        :min="min"
-        :max="max"
-        :step="stepValue"
-        :aria-label="label"
-        :aria-valuemin="min"
-        :aria-valuemax="max"
-        :aria-valuenow="modelValue"
-        @input="handleInput"
-      />
-      <span class="input-suffix" aria-hidden="true">{{ suffix }}</span>
+    <div class="dimension-header">
+      <label :for="inputId" class="dimension-label">{{ label }}</label>
+      <span class="dimension-value">{{ modelValue }}{{ suffix }}</span>
     </div>
     <input
+      :id="inputId"
       type="range"
       class="range-slider"
       :value="modelValue"
       :min="min"
       :max="max"
       :step="stepValue"
-      :aria-label="`${label} slider`"
+      :aria-label="label"
       :aria-valuemin="min"
       :aria-valuemax="max"
       :aria-valuenow="modelValue"
       @input="handleInput"
     />
-    <div class="range-value" aria-hidden="true">
-      <span>{{ min }} {{ suffix }}</span>
-      <span>{{ max }} {{ suffix }}</span>
+    <div class="range-labels" aria-hidden="true">
+      <span>{{ min }}{{ suffix }}</span>
+      <span>{{ max }}{{ suffix }}</span>
     </div>
   </div>
 </template>
 
 <style scoped>
 .dimension-group {
-  margin-bottom: 16px;
+  margin-bottom: 8px;
+}
+
+.dimension-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
 }
 
 .dimension-label {
-  display: block;
   font-weight: 500;
-  margin-bottom: 8px;
   color: var(--text-color);
+  font-size: 0.9rem;
 }
 
-.input-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.input-field {
-  flex: 1;
-  padding: 12px 16px;
-  border: 2px solid var(--border-color);
-  border-radius: var(--radius);
-  font-size: 1rem;
-  transition: border-color 0.2s ease;
-}
-
-.input-field:focus {
-  outline: none;
-  border-color: var(--primary-color);
-}
-
-.input-suffix {
-  color: var(--text-light);
-  font-weight: 500;
+.dimension-value {
+  font-weight: 600;
+  color: var(--primary-color);
+  font-size: 1.1rem;
 }
 
 .range-slider {
   -webkit-appearance: none;
   width: 100%;
-  height: 8px;
-  border-radius: 4px;
+  height: 6px;
+  border-radius: 3px;
   background: #e0e0e0;
   outline: none;
-  margin: 12px 0;
 }
 
 .range-slider:focus {
@@ -121,8 +94,8 @@ function handleInput(event: Event) {
 
 .range-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   background: var(--primary-color);
   cursor: pointer;
@@ -134,18 +107,19 @@ function handleInput(event: Event) {
 }
 
 .range-slider::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   background: var(--primary-color);
   cursor: pointer;
   border: none;
 }
 
-.range-value {
+.range-labels {
   display: flex;
   justify-content: space-between;
-  font-size: 0.85rem;
-  color: var(--text-light);
+  font-size: 0.75rem;
+  color: var(--gray-400);
+  margin-top: 4px;
 }
 </style>

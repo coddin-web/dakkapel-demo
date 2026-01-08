@@ -14,7 +14,12 @@ import type {
 // Pricing constants - exported for use in components
 export const PRICING = {
   BASE_PRICE: 16380,
-  MODEL_SURCHARGE: 9000,
+  MODEL_SURCHARGES: {
+    'standaard': 0,
+    'kader': 6000,
+    'klassiek': 7500,
+    'nokverhoging': 12000
+  } as const,
   WIDTH_PRICE_PER_CM: 46,
   HEIGHT_PRICE_PER_CM: 30,
   DRAAI_KIEPRAAM_SURCHARGE: 350,
@@ -53,11 +58,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
   const height = ref(150)
   const roofAngle = ref(45)
   const elements = ref<DormerElement[]>([
-    { position: 0, type: 'raam' },
-    { position: 1, type: 'geen' },
-    { position: 2, type: 'geen' },
-    { position: 3, type: 'geen' },
-    { position: 4, type: 'geen' }
+    { position: 0, type: 'raam' }
   ])
 
   // Step 3: Materials
@@ -105,7 +106,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     const base = PRICING.BASE_PRICE
 
     // Model surcharge
-    const model = dormerModel.value !== 'standaard' ? PRICING.MODEL_SURCHARGE : 0
+    const model = PRICING.MODEL_SURCHARGES[dormerModel.value]
 
     // Width surcharge
     const widthSurcharge = width.value > 200 ? (width.value - 200) * PRICING.WIDTH_PRICE_PER_CM : 0
@@ -174,8 +175,10 @@ export const useConfiguratorStore = defineStore('configurator', () => {
 
   function setWidth(value: number) {
     width.value = Math.max(150, Math.min(600, value))
-    // Adjust elements array when width changes
-    updateElementsForWidth()
+    // Remove elements that exceed the new max
+    if (elements.value.length > maxElements.value) {
+      elements.value = elements.value.slice(0, maxElements.value)
+    }
   }
 
   function setHeight(value: number) {
@@ -186,17 +189,28 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     roofAngle.value = Math.max(20, Math.min(60, value))
   }
 
-  function updateElementsForWidth() {
-    const max = maxElements.value
-    if (elements.value.length < max) {
-      // Add more element slots
-      while (elements.value.length < max) {
-        elements.value.push({ position: elements.value.length, type: 'geen' })
-      }
-    } else if (elements.value.length > max) {
-      // Remove excess elements
-      elements.value = elements.value.slice(0, max)
+  function addElement(type: ElementType) {
+    if (elements.value.length < maxElements.value) {
+      const newPosition = elements.value.length
+      elements.value.push({ position: newPosition, type })
     }
+  }
+
+  function removeElement(position: number) {
+    elements.value = elements.value.filter(el => el.position !== position)
+    // Reindex positions
+    elements.value.forEach((el, index) => {
+      el.position = index
+    })
+  }
+
+  function reorderElements(fromIndex: number, toIndex: number) {
+    const element = elements.value.splice(fromIndex, 1)[0]
+    elements.value.splice(toIndex, 0, element)
+    // Reindex positions
+    elements.value.forEach((el, index) => {
+      el.position = index
+    })
   }
 
   function setElementType(position: number, type: ElementType) {
@@ -314,6 +328,9 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     setWidth,
     setHeight,
     setRoofAngle,
+    addElement,
+    removeElement,
+    reorderElements,
     setElementType,
     setPanelMaterial,
     setFrameMaterial,

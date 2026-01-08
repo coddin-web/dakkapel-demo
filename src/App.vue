@@ -15,6 +15,9 @@ const stepPanelRef = ref<HTMLElement | null>(null)
 const hasScrolledToBottom = ref(true)
 
 function checkScrollPosition() {
+  // Once scrolled to bottom, stay active - don't re-disable
+  if (hasScrolledToBottom.value) return
+
   const panel = stepPanelRef.value
   if (!panel) return
 
@@ -22,7 +25,9 @@ function checkScrollPosition() {
   const isAtBottom = panel.scrollHeight - panel.scrollTop - panel.clientHeight < threshold
   const hasNoScroll = panel.scrollHeight <= panel.clientHeight
 
-  hasScrolledToBottom.value = isAtBottom || hasNoScroll
+  if (isAtBottom || hasNoScroll) {
+    hasScrolledToBottom.value = true
+  }
 }
 
 function resetAndCheckScroll() {
@@ -87,7 +92,7 @@ function getSubmitData() {
         height: store.height,
         roofAngle: store.roofAngle
       },
-      elements: store.elements.filter(e => e.type !== 'geen'),
+      elements: store.elements,
       materials: {
         panel: store.panelMaterial,
         frame: store.frameMaterial,

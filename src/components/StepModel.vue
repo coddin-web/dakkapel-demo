@@ -20,19 +20,19 @@ const models: { value: DormerModel; label: string; description: string; price: s
     value: 'kader',
     label: 'Kadermodel',
     description: 'Een model met een decoratief kader rondom de dakkapel voor een meer verfijnde uitstraling.',
-    price: '+ € 9.000,-'
+    price: '+ € 6.000,-'
   },
   {
     value: 'klassiek',
     label: 'Klassiek model',
     description: 'Een traditioneel ogend model dat goed past bij oudere woningen of klassieke bouwstijl.',
-    price: '+ € 9.000,-'
+    price: '+ € 7.500,-'
   },
   {
     value: 'nokverhoging',
     label: 'Nokverhoging',
     description: 'Een bijzondere variant waarbij de nok van het dak wordt verhoogd voor extra ruimte.',
-    price: '+ € 9.000,-'
+    price: '+ € 12.000,-'
   }
 ]
 </script>
