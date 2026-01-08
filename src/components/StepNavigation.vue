@@ -111,27 +111,20 @@ function handleKeydown(event: KeyboardEvent, stepNumber: number) {
 
   .step-nav-item {
     padding: 6px 10px;
-    font-size: 0.8rem;
-    gap: 6px;
+    font-size: 0.75rem;
+    gap: 4px;
     border-width: 1.5px;
   }
 
   .step-label {
-    display: none;
-  }
-
-  .step-nav-item.active .step-label {
     display: inline;
   }
 }
 
 @media (max-width: 400px) {
   .step-nav-item {
-    padding: 5px 8px;
-  }
-
-  .step-nav-item.active .step-label {
-    display: none;
+    padding: 4px 6px;
+    font-size: 0.7rem;
   }
 }
 </style>

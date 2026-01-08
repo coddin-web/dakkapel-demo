@@ -165,23 +165,29 @@ function handleKeydown(event: KeyboardEvent, callback: () => void) {
 
 <style scoped>
 .color-options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+@media (max-width: 480px) {
+  .color-options {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
 }
 
 .color-option {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 12px;
+  gap: 4px;
+  padding: 10px 6px;
   background: var(--secondary-color);
   border: 2px solid transparent;
   border-radius: var(--radius);
   cursor: pointer;
   transition: all 0.2s ease;
-  min-width: 100px;
 }
 
 .color-option:hover {
