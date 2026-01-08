@@ -49,7 +49,7 @@ function handleKeydown(event: KeyboardEvent, stepNumber: number) {
 <template>
   <nav class="step-nav" role="navigation" aria-label="Configurator stappen">
     <ol class="step-list" role="list">
-      <template v-for="(step, index) in stepStates" :key="step.number">
+      <template v-for="step in stepStates" :key="step.number">
         <li class="step-item">
           <div
             class="step-nav-item"
@@ -72,11 +72,6 @@ function handleKeydown(event: KeyboardEvent, stepNumber: number) {
             </span>
             <span v-if="step.showLabel" class="step-label">{{ step.label }}</span>
           </div>
-        </li>
-        <li v-if="index < stepStates.length - 1" class="step-connector" aria-hidden="true">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
         </li>
       </template>
     </ol>
@@ -116,10 +111,6 @@ function handleKeydown(event: KeyboardEvent, stepNumber: number) {
   white-space: nowrap;
 }
 
-.step-connector {
-  flex-shrink: 0;
-}
-
 .step-nav-item:focus {
   outline: 2px solid var(--primary-color);
   outline-offset: 2px;
@@ -135,10 +126,6 @@ function handleKeydown(event: KeyboardEvent, stepNumber: number) {
     gap: 4px;
     margin: 0 0 20px;
     padding: 8px 12px;
-  }
-
-  .step-connector {
-    flex-shrink: 0;
   }
 
   .step-nav-item {

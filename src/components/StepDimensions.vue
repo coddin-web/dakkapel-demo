@@ -246,57 +246,61 @@ function handleDragEnd() {
     </div>
 
     <!-- Add Element Popup -->
-    <div v-if="showAddPopup" class="popup-overlay" @click="closeAddPopup">
-      <div class="popup-content" @click.stop>
-        <div class="popup-header">
-          <h3>Element toevoegen</h3>
-          <button type="button" class="popup-close" @click="closeAddPopup" aria-label="Sluiten">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M18 6L6 18M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-        <div class="popup-options">
-          <button
-            v-for="elementType in addableElementTypes"
-            :key="elementType.value"
-            type="button"
-            class="popup-option"
-            @click="handleAddElement(elementType.value)"
-          >
-            <span class="popup-option-label">{{ elementType.label }}</span>
-            <span class="popup-option-desc">{{ elementType.description }}</span>
-          </button>
+    <Teleport to="body">
+      <div v-if="showAddPopup" class="popup-overlay" @click="closeAddPopup">
+        <div class="popup-content" @click.stop>
+          <div class="popup-header">
+            <h3>Element toevoegen</h3>
+            <button type="button" class="popup-close" @click="closeAddPopup" aria-label="Sluiten">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div class="popup-options">
+            <button
+              v-for="elementType in addableElementTypes"
+              :key="elementType.value"
+              type="button"
+              class="popup-option"
+              @click="handleAddElement(elementType.value)"
+            >
+              <span class="popup-option-label">{{ elementType.label }}</span>
+              <span class="popup-option-desc">{{ elementType.description }}</span>
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </Teleport>
 
     <!-- Edit Element Popup -->
-    <div v-if="showEditPopup" class="popup-overlay" @click="closeEditPopup">
-      <div class="popup-content" @click.stop>
-        <div class="popup-header">
-          <h3>Element wijzigen</h3>
-          <button type="button" class="popup-close" @click="closeEditPopup" aria-label="Sluiten">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M18 6L6 18M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-        <div class="popup-options">
-          <button
-            v-for="elementType in addableElementTypes"
-            :key="elementType.value"
-            type="button"
-            class="popup-option"
-            :class="{ 'popup-option-selected': store.elements.find(e => e.position === editingPosition)?.type === elementType.value }"
-            @click="handleChangeElementType(elementType.value)"
-          >
-            <span class="popup-option-label">{{ elementType.label }}</span>
-            <span class="popup-option-desc">{{ elementType.description }}</span>
-          </button>
+    <Teleport to="body">
+      <div v-if="showEditPopup" class="popup-overlay" @click="closeEditPopup">
+        <div class="popup-content" @click.stop>
+          <div class="popup-header">
+            <h3>Element wijzigen</h3>
+            <button type="button" class="popup-close" @click="closeEditPopup" aria-label="Sluiten">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div class="popup-options">
+            <button
+              v-for="elementType in addableElementTypes"
+              :key="elementType.value"
+              type="button"
+              class="popup-option"
+              :class="{ 'popup-option-selected': store.elements.find(e => e.position === editingPosition)?.type === elementType.value }"
+              @click="handleChangeElementType(elementType.value)"
+            >
+              <span class="popup-option-label">{{ elementType.label }}</span>
+              <span class="popup-option-desc">{{ elementType.description }}</span>
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </Teleport>
   </div>
 </template>
 
@@ -460,7 +464,10 @@ function handleDragEnd() {
   border-color: var(--primary-color);
 }
 
-/* Popup Styles */
+</style>
+
+<!-- Non-scoped styles for teleported popup -->
+<style>
 .popup-overlay {
   position: fixed;
   top: 0;
@@ -471,7 +478,7 @@ function handleDragEnd() {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 9999;
   padding: 20px;
 }
 
@@ -488,7 +495,7 @@ function handleDragEnd() {
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  border-bottom: 1px solid var(--gray-200);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .popup-header h3 {
@@ -501,9 +508,9 @@ function handleDragEnd() {
   padding: 4px;
   background: none;
   border: none;
-  color: var(--gray-400);
+  color: var(--text-light);
   cursor: pointer;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius);
 }
 
 .popup-close:hover {
@@ -523,7 +530,7 @@ function handleDragEnd() {
   padding: 16px 20px;
   background: none;
   border: none;
-  border-bottom: 1px solid var(--gray-100);
+  border-bottom: 1px solid var(--secondary-color);
   text-align: left;
   cursor: pointer;
   transition: background 0.15s ease;
@@ -550,6 +557,6 @@ function handleDragEnd() {
 
 .popup-option-desc {
   font-size: 0.85rem;
-  color: var(--gray-500);
+  color: var(--text-light);
 }
 </style>
