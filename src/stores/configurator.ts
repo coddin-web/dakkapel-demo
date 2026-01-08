@@ -70,6 +70,19 @@ export const useConfiguratorStore = defineStore('configurator', () => {
   const exteriorColor = ref<CustomColor>({ type: 'antraciet' })
   const fasciaColor = ref<CustomColor>({ type: 'antraciet' })
 
+  // Step 5: Contact
+  const contact = ref({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    street: '',
+    houseNumber: '',
+    postalCode: '',
+    city: '',
+    remarks: ''
+  })
+
   // Computed: Maximum number of elements based on width
   const maxElements = computed(() => {
     if (width.value < 200) return 2
@@ -217,8 +230,11 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     fasciaColor.value = color
   }
 
+  // Total number of steps
+  const TOTAL_STEPS = 5
+
   function goToStep(step: number) {
-    if (step >= 1 && step <= 4) {
+    if (step >= 1 && step <= TOTAL_STEPS) {
       // Mark current step as completed if moving forward
       if (step > currentStep.value && !completedSteps.value.includes(currentStep.value)) {
         completedSteps.value.push(currentStep.value)
@@ -228,12 +244,16 @@ export const useConfiguratorStore = defineStore('configurator', () => {
   }
 
   function nextStep() {
-    if (currentStep.value < 4) {
+    if (currentStep.value < TOTAL_STEPS) {
       if (!completedSteps.value.includes(currentStep.value)) {
         completedSteps.value.push(currentStep.value)
       }
       currentStep.value++
     }
+  }
+
+  function setContactField(field: keyof typeof contact.value, value: string) {
+    contact.value[field] = value
   }
 
   function previousStep() {
@@ -280,6 +300,8 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     frameColor,
     exteriorColor,
     fasciaColor,
+    contact,
+    TOTAL_STEPS,
 
     // Computed
     maxElements,
@@ -299,6 +321,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     setFrameColor,
     setExteriorColor,
     setFasciaColor,
+    setContactField,
     goToStep,
     nextStep,
     previousStep,

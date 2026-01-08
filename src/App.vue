@@ -6,6 +6,7 @@ import StepModel from '@/components/StepModel.vue'
 import StepDimensions from '@/components/StepDimensions.vue'
 import StepMaterials from '@/components/StepMaterials.vue'
 import StepColors from '@/components/StepColors.vue'
+import StepContact from '@/components/StepContact.vue'
 import PreviewPanel from '@/components/PreviewPanel.vue'
 
 const store = useConfiguratorStore()
@@ -72,8 +73,44 @@ onUnmounted(() => {
   window.removeEventListener('popstate', handlePopState)
 })
 
-function requestQuote() {
-  window.alert('Offerte aanvragen functionaliteit - Hier komt het offerteformulier')
+const showSubmitResult = ref(false)
+const submittedData = ref('')
+
+function getSubmitData() {
+  return {
+    contact: { ...store.contact },
+    configuration: {
+      model: store.dormerModel,
+      roofColor: store.roofColor,
+      dimensions: {
+        width: store.width,
+        height: store.height,
+        roofAngle: store.roofAngle
+      },
+      elements: store.elements.filter(e => e.type !== 'geen'),
+      materials: {
+        panel: store.panelMaterial,
+        frame: store.frameMaterial,
+        hasRolluiken: store.hasRolluiken
+      },
+      colors: {
+        frame: store.frameColor,
+        exterior: store.exteriorColor,
+        fascia: store.fasciaColor
+      }
+    },
+    pricing: store.priceBreakdown
+  }
+}
+
+function submitQuote() {
+  const data = getSubmitData()
+  submittedData.value = JSON.stringify(data, null, 2)
+  showSubmitResult.value = true
+}
+
+function closeResult() {
+  showSubmitResult.value = false
 }
 </script>
 
@@ -92,6 +129,7 @@ function requestQuote() {
         <StepDimensions v-if="store.currentStep === 2" />
         <StepMaterials v-if="store.currentStep === 3" />
         <StepColors v-if="store.currentStep === 4" />
+        <StepContact v-if="store.currentStep === 5" />
       </main>
 
       <aside class="preview-panel">
@@ -108,7 +146,7 @@ function requestQuote() {
         Vorige
       </button>
       <button
-        v-if="store.currentStep < 4"
+        v-if="store.currentStep < store.TOTAL_STEPS"
         class="btn btn-primary"
         :disabled="!hasScrolledToBottom"
         @click="store.nextStep()"
@@ -116,12 +154,63 @@ function requestQuote() {
         Volgende
       </button>
       <button
-        v-if="store.currentStep === 4"
+        v-if="store.currentStep === store.TOTAL_STEPS"
         class="btn btn-accent"
-        @click="requestQuote"
+        @click="submitQuote"
       >
-        Vraag offerte aan
+        Verstuur aanvraag
       </button>
+    </div>
+
+    <!-- Submit Result Modal -->
+    <div v-if="showSubmitResult" class="modal-overlay" @click="closeResult">
+      <div class="modal-content" @click.stop>
+        <h3>Gegevens die verzonden worden:</h3>
+        <pre class="json-output">{{ submittedData }}</pre>
+        <button class="btn btn-primary" @click="closeResult">Sluiten</button>
+      </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-content {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 80vh;
+  overflow: auto;
+}
+
+.modal-content h3 {
+  margin-bottom: 16px;
+  color: var(--primary-color);
+}
+
+.json-output {
+  background: var(--secondary-color);
+  padding: 16px;
+  border-radius: var(--radius);
+  font-size: 0.75rem;
+  overflow-x: auto;
+  margin-bottom: 16px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+</style>

@@ -9,7 +9,8 @@ const STEPS = [
   { number: 1, label: 'Model' },
   { number: 2, label: 'Afmetingen' },
   { number: 3, label: 'Materialen' },
-  { number: 4, label: 'Kleuren' }
+  { number: 4, label: 'Kleuren' },
+  { number: 5, label: 'Gegevens' }
 ] as const
 
 // Computed step states for cleaner template
