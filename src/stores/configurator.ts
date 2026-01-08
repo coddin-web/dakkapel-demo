@@ -57,11 +57,10 @@ export const useConfiguratorStore = defineStore('configurator', () => {
   const width = ref(300)
   const height = ref(150)
   const roofAngle = ref(45)
-  // Initial elements: 3 windows for default 300cm width
+  // Initial elements: 2 windows for default 300cm width (max 150cm per element)
   const elements = ref<DormerElement[]>([
     { position: 0, type: 'raam' },
-    { position: 1, type: 'raam' },
-    { position: 2, type: 'raam' }
+    { position: 1, type: 'raam' }
   ])
 
   // Step 3: Materials
@@ -87,9 +86,9 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     remarks: ''
   })
 
-  // Computed: Minimum number of elements based on width (every ~70cm needs an element)
+  // Computed: Minimum number of elements based on width (max 150cm per element)
   const minElements = computed(() => {
-    return Math.max(1, Math.ceil(width.value / 100))
+    return Math.max(1, Math.ceil(width.value / 150))
   })
 
   // Computed: Maximum number of elements based on width
