@@ -49,7 +49,7 @@ const models: { value: DormerModel; label: string; description: string; price: s
         Dakkleur
         <span class="form-hint">Welke kleur heeft uw huidige dak?</span>
       </label>
-      <div class="option-cards">
+      <div class="roof-color-cards">
         <div
           v-for="color in roofColors"
           :key="color.value"
@@ -97,6 +97,12 @@ const models: { value: DormerModel; label: string; description: string; price: s
 </template>
 
 <style scoped>
+.roof-color-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
 .color-preview {
   width: 60px;
   height: 60px;
