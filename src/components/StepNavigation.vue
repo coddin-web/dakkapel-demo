@@ -87,12 +87,12 @@ function handleKeydown(event: KeyboardEvent, stepNumber: number) {
 
 .step-list {
   display: flex;
-  justify-content: flex-start;
-  gap: 8px;
+  justify-content: center;
+  gap: 6px;
   flex-wrap: nowrap;
   list-style: none;
-  margin: 0 0 30px;
-  padding: 0 16px;
+  margin: 0 0 16px;
+  padding: 0;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
@@ -124,12 +124,12 @@ function handleKeydown(event: KeyboardEvent, stepNumber: number) {
 @media (max-width: 768px) {
   .step-list {
     gap: 4px;
-    margin: 0 0 20px;
-    padding: 8px 12px;
+    margin: 0 0 12px;
+    padding: 4px 8px;
   }
 
   .step-nav-item {
-    padding: 6px 10px;
+    padding: 4px 8px;
     font-size: 0.75rem;
     gap: 4px;
     border-width: 1.5px;

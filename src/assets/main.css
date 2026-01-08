@@ -70,8 +70,8 @@ body {
 .step-nav {
   display: flex;
   justify-content: center;
-  gap: 8px;
-  margin-bottom: 30px;
+  gap: 6px;
+  margin-bottom: 16px;
   flex-wrap: nowrap;
   max-width: 100%;
   overflow: hidden;
