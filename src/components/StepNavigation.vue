@@ -99,9 +99,10 @@ function handleKeydown(event: KeyboardEvent, stepNumber: number) {
 }
 
 /* Mobile: Hide connectors and show compact view */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .step-list {
     gap: 4px;
+    margin: 0;
   }
 
   .step-connector {
@@ -109,8 +110,10 @@ function handleKeydown(event: KeyboardEvent, stepNumber: number) {
   }
 
   .step-nav-item {
-    padding: 10px 12px;
-    font-size: 0.85rem;
+    padding: 6px 10px;
+    font-size: 0.8rem;
+    gap: 6px;
+    border-width: 1.5px;
   }
 
   .step-label {
@@ -119,6 +122,16 @@ function handleKeydown(event: KeyboardEvent, stepNumber: number) {
 
   .step-nav-item.active .step-label {
     display: inline;
+  }
+}
+
+@media (max-width: 400px) {
+  .step-nav-item {
+    padding: 5px 8px;
+  }
+
+  .step-nav-item.active .step-label {
+    display: none;
   }
 }
 </style>
