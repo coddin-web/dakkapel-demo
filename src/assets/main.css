@@ -71,7 +71,7 @@ body {
   display: flex;
   justify-content: center;
   gap: 6px;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
   flex-wrap: nowrap;
   max-width: 100%;
   overflow: hidden;
@@ -80,14 +80,14 @@ body {
 .step-nav-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 20px;
+  gap: 6px;
+  padding: 6px 10px;
   background: var(--white);
   border: 2px solid var(--border-color);
   border-radius: var(--radius);
   cursor: pointer;
   transition: all 0.2s ease;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 .step-nav-item:hover:not(.disabled) {
@@ -397,7 +397,7 @@ body {
 
 .preview-image {
   background: linear-gradient(135deg, #e8f4f8 0%, #d4e8ed 100%);
-  height: 300px;
+  height: 340px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -668,16 +668,16 @@ body {
   .step-nav {
     flex-shrink: 0;
     margin-bottom: 0;
-    padding: 8px 12px;
+    padding: 4px 6px;
     background: var(--white);
     border-bottom: 1px solid var(--border-color);
     gap: 4px;
   }
 
   .step-nav-item {
-    padding: 6px 10px;
+    padding: 4px 8px;
     font-size: 0.8rem;
-    gap: 6px;
+    gap: 4px;
     border-width: 1.5px;
   }
 
@@ -701,7 +701,7 @@ body {
 
   /* Compact preview */
   .preview-image {
-    height: 100px;
+    height: 140px;
     background: linear-gradient(135deg, #f0f4f5 0%, #e4ebed 100%);
   }
 
@@ -872,7 +872,7 @@ body {
   }
 
   .preview-image {
-    height: 80px;
+    height: 120px;
   }
 
   .option-cards {
