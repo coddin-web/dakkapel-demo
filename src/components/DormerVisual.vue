@@ -2,22 +2,6 @@
 import { computed } from 'vue'
 import type { RoofColor, DormerModel, DormerElement } from '@/types'
 
-// Visual constants
-const ROOF_COLORS = {
-  zwart: '#2c2c2c',
-  'oranje-rood': '#c45d35'
-} as const
-
-const ELEMENT_MAX_WIDTH = 50
-const ELEMENT_CONTAINER_WIDTH = 180
-const ELEMENT_GAP = 8
-const ELEMENT_START_X = 75
-const ELEMENT_Y = 108
-const ELEMENT_HEIGHT = 55
-const GLASS_PADDING = 4
-const GLASS_COLOR = '#87CEEB'
-const GLASS_OPACITY = 0.7
-
 const props = defineProps<{
   roofColor: RoofColor
   exteriorColor: string
@@ -27,198 +11,211 @@ const props = defineProps<{
   model: DormerModel
 }>()
 
-const roofHex = computed(() => {
-  return ROOF_COLORS[props.roofColor]
-})
+// Visual constants
+const ROOF_COLORS = {
+  zwart: '#2d2d2d',
+  'oranje-rood': '#b84c2e'
+} as const
 
-const activeElements = computed(() => {
-  return props.elements.filter(el => el.type !== 'geen')
-})
+const roofHex = computed(() => ROOF_COLORS[props.roofColor])
 
-const elementWidth = computed(() => {
+const activeElements = computed(() =>
+  props.elements.filter(el => el.type !== 'geen')
+)
+
+// Calculate window positions dynamically
+const windowLayout = computed(() => {
   const count = Math.max(activeElements.value.length, 1)
-  return Math.min(ELEMENT_MAX_WIDTH, ELEMENT_CONTAINER_WIDTH / count)
+  const totalWidth = 160
+  const gap = 6
+  const windowWidth = Math.min(45, (totalWidth - (count - 1) * gap) / count)
+  const startX = 70 + (totalWidth - (count * windowWidth + (count - 1) * gap)) / 2
+
+  return { count, windowWidth, gap, startX }
 })
 
-function getElementX(index: number): number {
-  return ELEMENT_START_X + index * (elementWidth.value + ELEMENT_GAP)
-}
-
-function getGlassX(index: number): number {
-  return getElementX(index) + GLASS_PADDING
-}
-
-function getGlassWidth(): number {
-  return elementWidth.value - GLASS_PADDING * 2
+function getWindowX(index: number): number {
+  const { windowWidth, gap, startX } = windowLayout.value
+  return startX + index * (windowWidth + gap)
 }
 </script>
 
 <template>
   <svg
     class="dormer-svg"
-    viewBox="0 0 300 220"
+    viewBox="0 0 300 200"
     xmlns="http://www.w3.org/2000/svg"
+    preserveAspectRatio="xMidYMid meet"
   >
-    <!-- House roof background -->
+    <defs>
+      <!-- Gradients for depth -->
+      <linearGradient id="roofGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" :stop-color="roofHex" stop-opacity="1" />
+        <stop offset="100%" :stop-color="roofHex" stop-opacity="0.85" />
+      </linearGradient>
+
+      <linearGradient id="bodyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" :stop-color="exteriorColor" stop-opacity="1" />
+        <stop offset="100%" :stop-color="exteriorColor" stop-opacity="0.9" />
+      </linearGradient>
+
+      <linearGradient id="glassGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#a8d8ea" />
+        <stop offset="50%" stop-color="#7ec8e3" />
+        <stop offset="100%" stop-color="#a8d8ea" />
+      </linearGradient>
+
+      <linearGradient id="skyReflection" x1="0%" y1="100%" x2="0%" y2="0%">
+        <stop offset="0%" stop-color="#fff" stop-opacity="0.1" />
+        <stop offset="100%" stop-color="#fff" stop-opacity="0.3" />
+      </linearGradient>
+
+      <!-- Shadow filter -->
+      <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
+        <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.2"/>
+      </filter>
+    </defs>
+
+    <!-- Background: House roof -->
     <polygon
-      class="house-roof"
       :fill="roofHex"
-      points="0,180 150,40 300,180"
+      points="0,170 150,50 300,170"
+      opacity="0.95"
     />
 
-    <!-- Roof tiles pattern -->
-    <g class="roof-pattern" :fill="roofHex" opacity="0.3">
-      <line v-for="i in 8" :key="'h'+i" :x1="0" :y1="80 + i * 14" :x2="300" :y2="80 + i * 14" stroke="#000" stroke-opacity="0.15" />
+    <!-- Roof tile lines -->
+    <g stroke="#000" stroke-opacity="0.08" stroke-width="1">
+      <line x1="20" y1="140" x2="280" y2="140" />
+      <line x1="30" y1="125" x2="270" y2="125" />
+      <line x1="45" y1="110" x2="255" y2="110" />
+      <line x1="60" y1="95" x2="240" y2="95" />
     </g>
 
-    <!-- Dormer body -->
-    <g class="dormer">
-      <!-- Dormer roof -->
+    <!-- Dormer structure -->
+    <g filter="url(#dropShadow)">
+
+      <!-- Dormer mini roof -->
       <polygon
-        class="dormer-roof-top"
         :fill="fasciaColor"
-        points="50,95 150,60 250,95"
+        points="55,82 150,55 245,82"
+      />
+      <polygon
+        fill="#000"
+        opacity="0.1"
+        points="55,82 150,55 150,82"
       />
 
-      <!-- Model-specific decoration -->
+      <!-- Model decorations -->
       <g v-if="model === 'kader'">
-        <!-- Frame decoration -->
-        <rect x="52" y="95" width="196" height="8" :fill="fasciaColor" />
-        <rect x="52" y="95" width="8" height="75" :fill="fasciaColor" />
-        <rect x="240" y="95" width="8" height="75" :fill="fasciaColor" />
+        <rect x="55" y="82" width="8" height="60" :fill="fasciaColor" />
+        <rect x="237" y="82" width="8" height="60" :fill="fasciaColor" />
       </g>
 
       <g v-if="model === 'klassiek'">
-        <!-- Classical decoration -->
-        <rect x="140" y="65" width="20" height="30" :fill="fasciaColor" />
-        <polygon points="135,65 150,50 165,65" :fill="fasciaColor" />
+        <rect x="143" y="58" width="14" height="24" :fill="fasciaColor" />
+        <polygon points="140,58 150,48 160,58" :fill="fasciaColor" />
       </g>
 
       <g v-if="model === 'nokverhoging'">
-        <!-- Extended roof -->
-        <polygon
-          :fill="roofHex"
-          points="100,60 150,30 200,60"
-        />
+        <polygon :fill="roofHex" points="110,55 150,30 190,55" />
+        <polygon fill="#000" opacity="0.1" points="110,55 150,30 150,55" />
       </g>
 
-      <!-- Main body -->
+      <!-- Main dormer body -->
       <rect
-        class="dormer-body"
         x="60"
-        y="100"
+        y="85"
         width="180"
-        height="70"
-        :fill="exteriorColor"
+        height="57"
+        fill="url(#bodyGradient)"
+        rx="1"
       />
 
-      <!-- Fascia board -->
-      <rect
-        class="dormer-fascia"
-        x="55"
-        y="95"
-        width="190"
-        height="8"
-        :fill="fasciaColor"
-      />
+      <!-- Top fascia -->
+      <rect x="55" y="80" width="190" height="6" :fill="fasciaColor" rx="1" />
 
-      <!-- Windows/Elements -->
-      <g class="dormer-elements">
+      <!-- Side trims -->
+      <rect x="55" y="80" width="6" height="62" :fill="fasciaColor" />
+      <rect x="239" y="80" width="6" height="62" :fill="fasciaColor" />
+
+      <!-- Windows -->
+      <g class="windows">
         <template v-for="(element, index) in activeElements" :key="element.position">
           <!-- Window frame -->
           <g v-if="element.type === 'raam' || element.type === 'draai-kiepraam'">
             <rect
-              :x="getElementX(index)"
-              :y="ELEMENT_Y"
-              :width="elementWidth"
-              :height="ELEMENT_HEIGHT"
+              :x="getWindowX(index)"
+              y="92"
+              :width="windowLayout.windowWidth"
+              height="42"
               :fill="frameColor"
-              rx="2"
-            />
-            <!-- Glass -->
-            <rect
-              :x="getGlassX(index)"
-              :y="ELEMENT_Y + GLASS_PADDING"
-              :width="getGlassWidth()"
-              :height="ELEMENT_HEIGHT - GLASS_PADDING * 2"
-              :fill="GLASS_COLOR"
-              :opacity="GLASS_OPACITY"
               rx="1"
             />
-            <!-- Window divider for draai-kiepraam -->
+            <!-- Glass pane -->
+            <rect
+              :x="getWindowX(index) + 3"
+              y="95"
+              :width="windowLayout.windowWidth - 6"
+              height="36"
+              fill="url(#glassGradient)"
+              rx="1"
+            />
+            <!-- Glass reflection -->
+            <rect
+              :x="getWindowX(index) + 3"
+              y="95"
+              :width="windowLayout.windowWidth - 6"
+              height="36"
+              fill="url(#skyReflection)"
+              rx="1"
+            />
+            <!-- Draai-kiepraam handle indicator -->
             <g v-if="element.type === 'draai-kiepraam'">
               <line
-                :x1="getGlassX(index) + getGlassWidth() / 2"
-                :y1="ELEMENT_Y + GLASS_PADDING"
-                :x2="getGlassX(index) + getGlassWidth() / 2"
-                :y2="ELEMENT_Y + ELEMENT_HEIGHT - GLASS_PADDING"
+                :x1="getWindowX(index) + windowLayout.windowWidth / 2"
+                y1="95"
+                :x2="getWindowX(index) + windowLayout.windowWidth / 2"
+                y2="131"
                 :stroke="frameColor"
                 stroke-width="2"
               />
-              <circle
-                :cx="getGlassX(index) + getGlassWidth() / 2 + 8"
-                :cy="ELEMENT_Y + ELEMENT_HEIGHT / 2"
-                r="2"
+              <rect
+                :x="getWindowX(index) + windowLayout.windowWidth / 2 + 4"
+                y="110"
+                width="4"
+                height="8"
                 fill="#666"
+                rx="1"
               />
             </g>
           </g>
+
           <!-- Panel -->
           <g v-else-if="element.type === 'tussenpaneel'">
             <rect
-              :x="getElementX(index)"
-              :y="ELEMENT_Y"
-              :width="elementWidth"
-              :height="ELEMENT_HEIGHT"
+              :x="getWindowX(index)"
+              y="92"
+              :width="windowLayout.windowWidth"
+              height="42"
               :fill="exteriorColor"
-              stroke="#555"
+              stroke="#00000020"
               stroke-width="1"
-              rx="2"
+              rx="1"
             />
           </g>
         </template>
 
-        <!-- Default window if no elements selected -->
+        <!-- Default single window if none selected -->
         <g v-if="activeElements.length === 0">
-          <rect
-            x="110"
-            :y="ELEMENT_Y"
-            width="80"
-            :height="ELEMENT_HEIGHT"
-            :fill="frameColor"
-            rx="2"
-          />
-          <rect
-            x="114"
-            :y="ELEMENT_Y + GLASS_PADDING"
-            width="72"
-            :height="ELEMENT_HEIGHT - GLASS_PADDING * 2"
-            :fill="GLASS_COLOR"
-            :opacity="GLASS_OPACITY"
-            rx="1"
-          />
+          <rect x="120" y="92" width="60" height="42" :fill="frameColor" rx="1" />
+          <rect x="123" y="95" width="54" height="36" fill="url(#glassGradient)" rx="1" />
+          <rect x="123" y="95" width="54" height="36" fill="url(#skyReflection)" rx="1" />
         </g>
       </g>
 
-      <!-- Bottom edge / sill -->
-      <rect
-        x="55"
-        y="167"
-        width="190"
-        height="5"
-        :fill="fasciaColor"
-      />
+      <!-- Bottom sill -->
+      <rect x="55" y="140" width="190" height="4" :fill="fasciaColor" rx="1" />
     </g>
-
-    <!-- Shadow under dormer -->
-    <ellipse
-      cx="150"
-      cy="175"
-      rx="90"
-      ry="8"
-      fill="#000"
-      opacity="0.1"
-    />
   </svg>
 </template>
 
@@ -226,20 +223,6 @@ function getGlassWidth(): number {
 .dormer-svg {
   width: 100%;
   height: 100%;
-  max-width: 300px;
-}
-
-.house-roof {
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
-}
-
-.dormer {
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
-}
-
-.dormer-body,
-.dormer-fascia,
-.dormer-roof-top {
-  transition: fill 0.3s ease;
+  display: block;
 }
 </style>

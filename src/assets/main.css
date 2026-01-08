@@ -29,6 +29,7 @@ body {
 
 #app {
   min-height: 100vh;
+  min-height: 100dvh; /* Dynamic viewport height for mobile */
 }
 
 /* Configurator Layout */
@@ -597,10 +598,27 @@ body {
 
 /* Responsive - Mobile */
 @media (max-width: 768px) {
+  html, body {
+    height: 100%;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  #app {
+    height: 100%;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
   .configurator {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
     padding: 0;
-    /* Account for sticky header + footer with iPhone safe area */
-    padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px));
+    overflow: hidden;
+    max-height: 100dvh;
   }
 
   /* Hide header on mobile for app-like experience */
@@ -608,18 +626,18 @@ body {
     display: none;
   }
 
-  /* Sticky header container for step nav + preview */
+  /* Main content area - scrollable */
   .configurator-content {
+    flex: 1;
     display: flex;
     flex-direction: column;
     gap: 0;
+    overflow: hidden;
   }
 
-  /* Sticky step navigation */
+  /* Fixed step navigation at top */
   .step-nav {
-    position: sticky;
-    top: 0;
-    z-index: 90;
+    flex-shrink: 0;
     margin-bottom: 0;
     padding: 8px 12px;
     background: var(--white);
@@ -640,12 +658,9 @@ body {
     font-size: 0.7rem;
   }
 
-  /* Sticky preview panel */
+  /* Fixed preview panel */
   .preview-panel {
-    position: sticky;
-    top: 44px;
-    z-index: 80;
-    margin-bottom: 0;
+    flex-shrink: 0;
     order: -1;
   }
 
@@ -655,16 +670,17 @@ body {
     box-shadow: none;
   }
 
-  /* Compact preview - only show price on mobile */
+  /* Compact preview */
   .preview-image {
-    height: 120px;
+    height: 100px;
+    background: linear-gradient(135deg, #f0f4f5 0%, #e4ebed 100%);
   }
 
   .preview-price {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 16px;
+    padding: 8px 16px;
     border-bottom: 1px solid var(--border-color);
     text-align: left;
   }
@@ -675,7 +691,7 @@ body {
   }
 
   .preview-price-value {
-    font-size: 1.25rem;
+    font-size: 1.2rem;
     margin: 0;
   }
 
@@ -691,12 +707,16 @@ body {
     display: none;
   }
 
-  /* Step panel content */
+  /* Scrollable step panel content */
   .step-panel {
+    flex: 1;
     padding: 12px 16px;
+    padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px));
     border-radius: 0;
     box-shadow: none;
     background: var(--white);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .step-title {
@@ -751,27 +771,28 @@ body {
     font-size: 0.9rem;
   }
 
-  /* Sticky footer navigation with iPhone safe area */
+  /* Fixed footer navigation with iPhone safe area */
   .btn-group {
     position: fixed;
-    bottom: 0;
     left: 0;
     right: 0;
+    bottom: 0;
+    bottom: env(safe-area-inset-bottom, 0px);
     flex-direction: row;
     gap: 8px;
     padding: 10px 12px;
-    padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: max(10px, env(safe-area-inset-bottom, 0px));
     background: var(--white);
-    box-shadow: 0 -1px 8px rgba(0, 0, 0, 0.1);
+    border-top: 1px solid var(--border-color);
     z-index: 100;
     margin-top: 0;
   }
 
   .btn-group .btn {
     flex: 1;
-    padding: 14px;
-    min-height: 48px;
-    font-size: 0.95rem;
+    padding: 12px;
+    min-height: 44px;
+    font-size: 0.9rem;
   }
 
   .elements-grid {
@@ -813,9 +834,8 @@ body {
 
 /* Responsive - Small mobile */
 @media (max-width: 480px) {
-  .configurator {
-    padding: 0;
-    padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px));
+  .step-nav {
+    padding: 6px 10px;
   }
 
   .step-nav-item {
@@ -828,7 +848,7 @@ body {
   }
 
   .preview-image {
-    height: 100px;
+    height: 80px;
   }
 
   .option-cards {
