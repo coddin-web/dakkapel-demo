@@ -19,6 +19,13 @@ function getColorName(type: ColorOption): string {
 function getColorCode(type: ColorOption): string | undefined {
   return RAL_COLORS[type].code
 }
+
+function handleKeydown(event: KeyboardEvent, callback: () => void) {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault()
+    callback()
+  }
+}
 </script>
 
 <template>
@@ -29,21 +36,27 @@ function getColorCode(type: ColorOption): string | undefined {
     </p>
 
     <div class="form-section">
-      <label class="form-label">
+      <label id="frame-color-label" class="form-label">
         Kozijnkleur
         <span class="form-hint">Standaard: wit (RAL 9010)</span>
       </label>
-      <div class="color-options">
+      <div class="color-options" role="radiogroup" aria-labelledby="frame-color-label">
         <div
           v-for="color in frameColors"
           :key="color"
           class="color-option"
           :class="{ selected: store.frameColor.type === color }"
+          role="radio"
+          :aria-checked="store.frameColor.type === color"
+          :aria-label="`${getColorName(color)}${getColorCode(color) ? ` (${getColorCode(color)})` : ''}${color === 'anders' ? ' - + € 450,-' : ''}`"
+          tabindex="0"
           @click="store.setFrameColor({ type: color })"
+          @keydown="handleKeydown($event, () => store.setFrameColor({ type: color }))"
         >
           <div
             class="color-preview"
             :style="{ backgroundColor: getColorHex(color) }"
+            aria-hidden="true"
           ></div>
           <span class="color-name">{{ getColorName(color) }}</span>
           <span v-if="getColorCode(color)" class="color-code">{{ getColorCode(color) }}</span>
@@ -51,33 +64,41 @@ function getColorCode(type: ColorOption): string | undefined {
         </div>
       </div>
       <div v-if="store.frameColor.type === 'anders'" class="ral-input-group">
-        <label>RAL-code:</label>
+        <label for="frame-ral-code">RAL-code:</label>
         <input
+          id="frame-ral-code"
           type="text"
           class="ral-input"
           placeholder="bv. RAL 5010"
           :value="store.frameColor.ralCode"
+          aria-label="Voer een RAL-code in voor de kozijnkleur"
           @input="store.setFrameColor({ type: 'anders', ralCode: ($event.target as HTMLInputElement).value })"
         />
       </div>
     </div>
 
     <div class="form-section">
-      <label class="form-label">
+      <label id="exterior-color-label" class="form-label">
         Buitenzijde
         <span class="form-hint">De kleur van de zijkanten en het front. Standaard: antraciet</span>
       </label>
-      <div class="color-options">
+      <div class="color-options" role="radiogroup" aria-labelledby="exterior-color-label">
         <div
           v-for="color in exteriorColors"
           :key="color"
           class="color-option"
           :class="{ selected: store.exteriorColor.type === color }"
+          role="radio"
+          :aria-checked="store.exteriorColor.type === color"
+          :aria-label="`${getColorName(color)}${getColorCode(color) ? ` (${getColorCode(color)})` : ''}${color === 'anders' ? ' - + € 450,-' : ''}`"
+          tabindex="0"
           @click="store.setExteriorColor({ type: color })"
+          @keydown="handleKeydown($event, () => store.setExteriorColor({ type: color }))"
         >
           <div
             class="color-preview"
             :style="{ backgroundColor: getColorHex(color) }"
+            aria-hidden="true"
           ></div>
           <span class="color-name">{{ getColorName(color) }}</span>
           <span v-if="getColorCode(color)" class="color-code">{{ getColorCode(color) }}</span>
@@ -85,33 +106,41 @@ function getColorCode(type: ColorOption): string | undefined {
         </div>
       </div>
       <div v-if="store.exteriorColor.type === 'anders'" class="ral-input-group">
-        <label>RAL-code:</label>
+        <label for="exterior-ral-code">RAL-code:</label>
         <input
+          id="exterior-ral-code"
           type="text"
           class="ral-input"
           placeholder="bv. RAL 5010"
           :value="store.exteriorColor.ralCode"
+          aria-label="Voer een RAL-code in voor de buitenzijde"
           @input="store.setExteriorColor({ type: 'anders', ralCode: ($event.target as HTMLInputElement).value })"
         />
       </div>
     </div>
 
     <div class="form-section">
-      <label class="form-label">
+      <label id="fascia-color-label" class="form-label">
         Boeiboord
         <span class="form-hint">De afwerkingsrand van de dakkapel. Standaard: antraciet</span>
       </label>
-      <div class="color-options">
+      <div class="color-options" role="radiogroup" aria-labelledby="fascia-color-label">
         <div
           v-for="color in fasciaColors"
           :key="color"
           class="color-option"
           :class="{ selected: store.fasciaColor.type === color }"
+          role="radio"
+          :aria-checked="store.fasciaColor.type === color"
+          :aria-label="`${getColorName(color)}${getColorCode(color) ? ` (${getColorCode(color)})` : ''}${color === 'anders' ? ' - + € 450,-' : ''}`"
+          tabindex="0"
           @click="store.setFasciaColor({ type: color })"
+          @keydown="handleKeydown($event, () => store.setFasciaColor({ type: color }))"
         >
           <div
             class="color-preview"
             :style="{ backgroundColor: getColorHex(color) }"
+            aria-hidden="true"
           ></div>
           <span class="color-name">{{ getColorName(color) }}</span>
           <span v-if="getColorCode(color)" class="color-code">{{ getColorCode(color) }}</span>
@@ -119,12 +148,14 @@ function getColorCode(type: ColorOption): string | undefined {
         </div>
       </div>
       <div v-if="store.fasciaColor.type === 'anders'" class="ral-input-group">
-        <label>RAL-code:</label>
+        <label for="fascia-ral-code">RAL-code:</label>
         <input
+          id="fascia-ral-code"
           type="text"
           class="ral-input"
           placeholder="bv. RAL 5010"
           :value="store.fasciaColor.ralCode"
+          aria-label="Voer een RAL-code in voor het boeiboord"
           @input="store.setFasciaColor({ type: 'anders', ralCode: ($event.target as HTMLInputElement).value })"
         />
       </div>
@@ -160,6 +191,15 @@ function getColorCode(type: ColorOption): string | undefined {
 .color-option.selected {
   border-color: var(--primary-color);
   background: rgba(26, 95, 74, 0.05);
+}
+
+.color-option:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.color-option:focus:not(:focus-visible) {
+  outline: none;
 }
 
 .color-preview {

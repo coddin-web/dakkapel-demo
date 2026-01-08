@@ -45,6 +45,13 @@ const frameMaterials: { value: FrameMaterial; label: string; description: string
     price: '+ € 3.500,-'
   }
 ]
+
+function handleKeydown(event: KeyboardEvent, callback: () => void) {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault()
+    callback()
+  }
+}
 </script>
 
 <template>
@@ -55,17 +62,22 @@ const frameMaterials: { value: FrameMaterial; label: string; description: string
     </p>
 
     <div class="form-section">
-      <label class="form-label">
+      <label id="panel-material-label" class="form-label">
         Tussenpanelen en zijkanten
         <span class="form-hint">Het materiaal voor de zijkanten en eventuele tussenpanelen</span>
       </label>
-      <div class="model-cards">
+      <div class="model-cards" role="radiogroup" aria-labelledby="panel-material-label">
         <div
           v-for="material in panelMaterials"
           :key="material.value"
           class="model-card"
           :class="{ selected: store.panelMaterial === material.value }"
+          role="radio"
+          :aria-checked="store.panelMaterial === material.value"
+          :aria-label="`${material.label}: ${material.description} - ${material.price}`"
+          tabindex="0"
           @click="store.setPanelMaterial(material.value)"
+          @keydown="handleKeydown($event, () => store.setPanelMaterial(material.value))"
         >
           <div class="model-card-header">
             <span class="model-card-title">{{ material.label }}</span>
@@ -82,17 +94,22 @@ const frameMaterials: { value: FrameMaterial; label: string; description: string
     </div>
 
     <div class="form-section">
-      <label class="form-label">
+      <label id="frame-material-label" class="form-label">
         Kozijnen
         <span class="form-hint">Het materiaal voor de raamkozijnen</span>
       </label>
-      <div class="option-cards" style="grid-template-columns: repeat(2, 1fr);">
+      <div class="option-cards" style="grid-template-columns: repeat(2, 1fr);" role="radiogroup" aria-labelledby="frame-material-label">
         <div
           v-for="material in frameMaterials"
           :key="material.value"
           class="option-card frame-card"
           :class="{ selected: store.frameMaterial === material.value }"
+          role="radio"
+          :aria-checked="store.frameMaterial === material.value"
+          :aria-label="`${material.label}: ${material.description} - ${material.price}`"
+          tabindex="0"
           @click="store.setFrameMaterial(material.value)"
+          @keydown="handleKeydown($event, () => store.setFrameMaterial(material.value))"
         >
           <span class="option-card-title">{{ material.label }}</span>
           <p class="frame-description">{{ material.description }}</p>
@@ -107,17 +124,22 @@ const frameMaterials: { value: FrameMaterial; label: string; description: string
     </div>
 
     <div class="form-section">
-      <label class="form-label">
+      <label id="rolluiken-label" class="form-label">
         Rolluiken
         <span class="form-hint">
           Wilt u rolluiken bij de ramen? ({{ store.windowCount }} {{ store.windowCount === 1 ? 'raam' : 'ramen' }})
         </span>
       </label>
-      <div class="toggle-group">
+      <div class="toggle-group" role="radiogroup" aria-labelledby="rolluiken-label">
         <div
           class="toggle-option"
           :class="{ selected: !store.hasRolluiken }"
+          role="radio"
+          :aria-checked="!store.hasRolluiken"
+          aria-label="Geen rolluiken - Inbegrepen"
+          tabindex="0"
           @click="store.setHasRolluiken(false)"
+          @keydown="handleKeydown($event, () => store.setHasRolluiken(false))"
         >
           <strong>Nee</strong>
           <p class="toggle-description">Geen rolluiken</p>
@@ -126,7 +148,12 @@ const frameMaterials: { value: FrameMaterial; label: string; description: string
         <div
           class="toggle-option"
           :class="{ selected: store.hasRolluiken }"
+          role="radio"
+          :aria-checked="store.hasRolluiken"
+          :aria-label="`Rolluiken bij alle ramen - ${store.formatPrice(store.windowCount * 650)}`"
+          tabindex="0"
           @click="store.setHasRolluiken(true)"
+          @keydown="handleKeydown($event, () => store.setHasRolluiken(true))"
         >
           <strong>Ja</strong>
           <p class="toggle-description">Rolluiken bij alle ramen</p>
@@ -166,5 +193,18 @@ const frameMaterials: { value: FrameMaterial; label: string; description: string
 
 .toggle-price.included {
   color: var(--success-color);
+}
+
+.model-card:focus,
+.option-card:focus,
+.toggle-option:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.model-card:focus:not(:focus-visible),
+.option-card:focus:not(:focus-visible),
+.toggle-option:focus:not(:focus-visible) {
+  outline: none;
 }
 </style>

@@ -2,6 +2,22 @@
 import { computed } from 'vue'
 import type { RoofColor, DormerModel, DormerElement } from '@/types'
 
+// Visual constants
+const ROOF_COLORS = {
+  zwart: '#2c2c2c',
+  'oranje-rood': '#c45d35'
+} as const
+
+const ELEMENT_MAX_WIDTH = 50
+const ELEMENT_CONTAINER_WIDTH = 180
+const ELEMENT_GAP = 8
+const ELEMENT_START_X = 75
+const ELEMENT_Y = 108
+const ELEMENT_HEIGHT = 55
+const GLASS_PADDING = 4
+const GLASS_COLOR = '#87CEEB'
+const GLASS_OPACITY = 0.7
+
 const props = defineProps<{
   roofColor: RoofColor
   exteriorColor: string
@@ -12,7 +28,7 @@ const props = defineProps<{
 }>()
 
 const roofHex = computed(() => {
-  return props.roofColor === 'oranje-rood' ? '#c45d35' : '#3d3d3d'
+  return ROOF_COLORS[props.roofColor]
 })
 
 const activeElements = computed(() => {
@@ -21,8 +37,20 @@ const activeElements = computed(() => {
 
 const elementWidth = computed(() => {
   const count = Math.max(activeElements.value.length, 1)
-  return Math.min(50, 180 / count)
+  return Math.min(ELEMENT_MAX_WIDTH, ELEMENT_CONTAINER_WIDTH / count)
 })
+
+function getElementX(index: number): number {
+  return ELEMENT_START_X + index * (elementWidth.value + ELEMENT_GAP)
+}
+
+function getGlassX(index: number): number {
+  return getElementX(index) + GLASS_PADDING
+}
+
+function getGlassWidth(): number {
+  return elementWidth.value - GLASS_PADDING * 2
+}
 </script>
 
 <template>
@@ -100,36 +128,36 @@ const elementWidth = computed(() => {
           <!-- Window frame -->
           <g v-if="element.type === 'raam' || element.type === 'draai-kiepraam'">
             <rect
-              :x="75 + index * (elementWidth + 8)"
-              y="108"
+              :x="getElementX(index)"
+              :y="ELEMENT_Y"
               :width="elementWidth"
-              height="55"
+              :height="ELEMENT_HEIGHT"
               :fill="frameColor"
               rx="2"
             />
             <!-- Glass -->
             <rect
-              :x="79 + index * (elementWidth + 8)"
-              y="112"
-              :width="elementWidth - 8"
-              height="47"
-              fill="#87CEEB"
-              opacity="0.7"
+              :x="getGlassX(index)"
+              :y="ELEMENT_Y + GLASS_PADDING"
+              :width="getGlassWidth()"
+              :height="ELEMENT_HEIGHT - GLASS_PADDING * 2"
+              :fill="GLASS_COLOR"
+              :opacity="GLASS_OPACITY"
               rx="1"
             />
             <!-- Window divider for draai-kiepraam -->
             <g v-if="element.type === 'draai-kiepraam'">
               <line
-                :x1="79 + index * (elementWidth + 8) + (elementWidth - 8) / 2"
-                y1="112"
-                :x2="79 + index * (elementWidth + 8) + (elementWidth - 8) / 2"
-                y2="159"
+                :x1="getGlassX(index) + getGlassWidth() / 2"
+                :y1="ELEMENT_Y + GLASS_PADDING"
+                :x2="getGlassX(index) + getGlassWidth() / 2"
+                :y2="ELEMENT_Y + ELEMENT_HEIGHT - GLASS_PADDING"
                 :stroke="frameColor"
                 stroke-width="2"
               />
               <circle
-                :cx="79 + index * (elementWidth + 8) + (elementWidth - 8) / 2 + 8"
-                cy="135"
+                :cx="getGlassX(index) + getGlassWidth() / 2 + 8"
+                :cy="ELEMENT_Y + ELEMENT_HEIGHT / 2"
                 r="2"
                 fill="#666"
               />
@@ -138,10 +166,10 @@ const elementWidth = computed(() => {
           <!-- Panel -->
           <g v-else-if="element.type === 'tussenpaneel'">
             <rect
-              :x="75 + index * (elementWidth + 8)"
-              y="108"
+              :x="getElementX(index)"
+              :y="ELEMENT_Y"
               :width="elementWidth"
-              height="55"
+              :height="ELEMENT_HEIGHT"
               :fill="exteriorColor"
               stroke="#555"
               stroke-width="1"
@@ -154,19 +182,19 @@ const elementWidth = computed(() => {
         <g v-if="activeElements.length === 0">
           <rect
             x="110"
-            y="108"
+            :y="ELEMENT_Y"
             width="80"
-            height="55"
+            :height="ELEMENT_HEIGHT"
             :fill="frameColor"
             rx="2"
           />
           <rect
             x="114"
-            y="112"
+            :y="ELEMENT_Y + GLASS_PADDING"
             width="72"
-            height="47"
-            fill="#87CEEB"
-            opacity="0.7"
+            :height="ELEMENT_HEIGHT - GLASS_PADDING * 2"
+            :fill="GLASS_COLOR"
+            :opacity="GLASS_OPACITY"
             rx="1"
           />
         </g>

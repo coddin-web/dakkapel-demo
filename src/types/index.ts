@@ -20,28 +20,6 @@ export interface CustomColor {
   ralCode?: string
 }
 
-export interface ConfiguratorState {
-  // Step 1: Model
-  roofColor: RoofColor
-  dormerModel: DormerModel
-
-  // Step 2: Dimensions
-  width: number
-  height: number
-  roofAngle: number
-  elements: DormerElement[]
-
-  // Step 3: Materials
-  panelMaterial: PanelMaterial
-  frameMaterial: FrameMaterial
-  hasRolluiken: boolean
-
-  // Step 4: Colors
-  frameColor: CustomColor
-  exteriorColor: CustomColor
-  fasciaColor: CustomColor
-}
-
 export interface PriceBreakdown {
   base: number
   model: number
