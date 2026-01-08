@@ -186,6 +186,8 @@ function drawVisualization() {
     .attr('stroke-width', 1)
 
   // === WINDOWS ===
+  // Draai-kiepramen are always 80cm wide, other elements are flexible
+  const DRAAI_KIEPRAAM_CM = 80
   const windowCount = Math.max(activeElements.value.length, 1)
   const frameBorder = 4
   const mullionW = 3
@@ -194,13 +196,31 @@ function drawVisualization() {
 
   const totalMullions = (windowCount - 1) * mullionW
   const availableW = W - sidePad * 2 - totalMullions
-  const windowW = availableW / windowCount
-  const windowH = Math.min(windowW * 1.8, H - topPad * 2)
+
+  // Calculate widths: draai-kiepramen get fixed proportion, others share remaining
+  const draaiKiepCount = activeElements.value.filter(el => el.type === 'draai-kiepraam').length
+  const flexCount = windowCount - draaiKiepCount
+
+  // Convert 80cm to pixel width proportionally (based on dormer width in cm vs pixels)
+  const cmToPixel = W / props.width
+  const draaiKiepW = DRAAI_KIEPRAAM_CM * cmToPixel
+
+  // Remaining width for flexible elements
+  const remainingW = availableW - (draaiKiepCount * draaiKiepW)
+  const flexW = flexCount > 0 ? remainingW / flexCount : 0
+
+  // Calculate max window height based on narrowest window
+  const minWindowW = draaiKiepCount > 0 ? Math.min(draaiKiepW, flexW || draaiKiepW) : flexW
+  const windowH = Math.min(minWindowW * 1.8, H - topPad * 2)
   const windowY = y + (H - windowH) / 2
 
+  // Track x position as we draw
+  let currentX = x + sidePad
+
   for (let i = 0; i < windowCount; i++) {
-    const wx = x + sidePad + i * (windowW + mullionW)
     const element = activeElements.value[i] || { type: 'raam' }
+    const windowW = element.type === 'draai-kiepraam' ? draaiKiepW : flexW
+    const wx = currentX
 
     const windowGroup = dormerGroup.append('g')
       .attr('class', 'window')
@@ -256,6 +276,9 @@ function drawVisualization() {
         .attr('height', windowH)
         .attr('fill', '#333333')
     }
+
+    // Move to next position
+    currentX += windowW + mullionW
   }
 
   // Model decorations

@@ -12,6 +12,12 @@ import type {
   PriceBreakdown
 } from '@/types'
 
+// Element width constants
+export const ELEMENT_WIDTHS = {
+  DRAAI_KIEPRAAM: 80, // Draai-kiepramen are always 80cm wide
+  MAX_FLEXIBLE: 150   // Other elements max 150cm wide
+} as const
+
 // Pricing constants - exported for use in components
 export const PRICING = {
   BASE_PRICE: 16380,

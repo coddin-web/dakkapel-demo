@@ -61,7 +61,7 @@ export const DORMER_ROOF_LABELS: Record<DormerRoofType, string> = {
 export const ELEMENT_LABELS: Record<ElementType, string> = {
   'geen': 'Geen element',
   'raam': 'Raam (vast)',
-  'draai-kiepraam': 'Draai-kiepraam',
+  'draai-kiepraam': 'Draai-kiepraam (80cm)',
   'tussenpaneel': 'Tussenpaneel'
 }
 
