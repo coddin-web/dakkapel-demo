@@ -17,10 +17,10 @@ const props = defineProps<{
 
 const svgRef = ref<SVGSVGElement | null>(null)
 
-// Color mappings
+// Color mappings for roof tiles
 const ROOF_COLORS = {
-  zwart: { main: '#2d2d2d', dark: '#1a1a1a', light: '#404040' },
-  'oranje-rood': { main: '#b84c2e', dark: '#8a3520', light: '#d4613f' }
+  zwart: { main: '#3a3a3a', dark: '#2a2a2a', highlight: '#555' },
+  'oranje-rood': { main: '#c45d35', dark: '#a04a2a', highlight: '#d87850' }
 } as const
 
 const roofPalette = computed(() => ROOF_COLORS[props.roofColor])
@@ -29,34 +29,19 @@ const activeElements = computed(() =>
   props.elements.filter(el => el.type !== 'geen')
 )
 
-// Isometric projection helpers - standard 2:1 isometric
-function isoProject(x: number, y: number, z: number): [number, number] {
-  // Standard isometric: x goes right-down, z goes left-down, y goes up
-  const isoX = (x - z) * 0.866 // cos(30°)
-  const isoY = (x + z) * 0.5 - y // sin(30°) for x and z, minus y for height
-  return [isoX, isoY]
-}
-
-// Create polygon path from 3D points
-function createPath(points: [number, number, number][]): string {
-  const projected = points.map(p => isoProject(p[0], p[1], p[2]))
-  return `M ${projected.map(p => `${p[0]},${p[1]}`).join(' L ')} Z`
-}
-
 // Dormer dimensions based on props
 const dormerDims = computed(() => {
-  // Scale width: 150-1200cm -> 30-90 units
-  const w = 30 + ((props.width - 150) / (1200 - 150)) * 60
-  // Scale height: 100-200cm -> 20-40 units
-  const h = 20 + ((props.height - 100) / (200 - 100)) * 20
-  // Depth proportional
-  const d = 25
+  // Scale width: 150-1200cm maps to visual width
+  const widthRatio = (props.width - 150) / (1200 - 150)
+  const w = 120 + widthRatio * 180 // 120-300 pixels wide
+
+  // Scale height: 100-200cm
+  const heightRatio = (props.height - 100) / (200 - 100)
+  const h = 60 + heightRatio * 40 // 60-100 pixels tall
 
   const isFlat = props.dormerRoofType === 'plat'
-  const isNokverhoging = props.model === 'nokverhoging'
-  const roofHeight = isFlat ? 4 : (isNokverhoging ? 20 : 12)
 
-  return { w, h, d, isFlat, isNokverhoging, roofHeight }
+  return { w, h, isFlat }
 })
 
 function drawVisualization() {
@@ -65,19 +50,46 @@ function drawVisualization() {
   const svg = d3.select(svgRef.value)
   svg.selectAll('*').remove()
 
-  const viewWidth = 300
-  const viewHeight = 200
+  const viewWidth = 400
+  const viewHeight = 280
 
-  // Add defs for gradients
   const defs = svg.append('defs')
 
-  // Sky gradient
+  // Sky gradient - soft blue
   const skyGrad = defs.append('linearGradient')
     .attr('id', 'skyGradient')
     .attr('x1', '0%').attr('y1', '0%')
     .attr('x2', '0%').attr('y2', '100%')
-  skyGrad.append('stop').attr('offset', '0%').attr('stop-color', '#dbeef5')
-  skyGrad.append('stop').attr('offset', '100%').attr('stop-color', '#c5e0ed')
+  skyGrad.append('stop').attr('offset', '0%').attr('stop-color', '#b8d4e8')
+  skyGrad.append('stop').attr('offset', '100%').attr('stop-color', '#d8e8f0')
+
+  // Sedum/green roof gradient
+  const sedumGrad = defs.append('linearGradient')
+    .attr('id', 'sedumGradient')
+    .attr('x1', '0%').attr('y1', '0%')
+    .attr('x2', '0%').attr('y2', '100%')
+  sedumGrad.append('stop').attr('offset', '0%').attr('stop-color', '#5a7a5a')
+  sedumGrad.append('stop').attr('offset', '100%').attr('stop-color', '#4a6a4a')
+
+  // Glass reflection gradient
+  const glassGrad = defs.append('linearGradient')
+    .attr('id', 'glassGradient')
+    .attr('x1', '0%').attr('y1', '0%')
+    .attr('x2', '100%').attr('y2', '100%')
+  glassGrad.append('stop').attr('offset', '0%').attr('stop-color', '#a8c8d8')
+  glassGrad.append('stop').attr('offset', '30%').attr('stop-color', '#88b0c0')
+  glassGrad.append('stop').attr('offset', '100%').attr('stop-color', '#6898a8')
+
+  // Tree blur filter
+  const treeBlur = defs.append('filter')
+    .attr('id', 'treeBlur')
+    .attr('x', '-50%')
+    .attr('y', '-50%')
+    .attr('width', '200%')
+    .attr('height', '200%')
+  treeBlur.append('feGaussianBlur')
+    .attr('in', 'SourceGraphic')
+    .attr('stdDeviation', '3')
 
   // Background
   svg.append('rect')
@@ -88,347 +100,390 @@ function drawVisualization() {
   const dims = dormerDims.value
   const roofColor = roofPalette.value
 
-  // House dimensions - centered at origin
-  const houseW = 100
-  const houseD = 60
-  const houseH = 45
-  const roofH = 30
-
-  // Calculate center point of the scene to center in viewport
-  // The dormer should be roughly centered
-  const sceneCenterX = 0
-  const sceneCenterY = houseH + roofH / 2
-  const sceneCenterZ = 0
-
-  const [projCenterX, projCenterY] = isoProject(sceneCenterX, sceneCenterY, sceneCenterZ)
-  const offsetX = viewWidth / 2 - projCenterX
-  const offsetY = viewHeight / 2 - projCenterY + 15
-
-  // Create main group centered on the dormer
+  // Main group
   const g = svg.append('g')
-    .attr('transform', `translate(${offsetX}, ${offsetY})`)
 
-  // House base position
-  const hx = -houseW / 2
-  const hz = -houseD / 2
+  // === ROOF TILES (MAIN HOUSE ROOF) ===
+  // Draw the terracotta/dark roof in perspective
+  const roofStartY = 80
+  const roofEndY = viewHeight + 20
+  const roofLeftX = -20
+  const roofRightX = viewWidth + 20
 
-  // Draw house - back to front for proper layering
+  // Main roof slope with tile texture
+  const roofGroup = g.append('g')
 
-  // Left wall (back, partially visible)
-  g.append('path')
-    .attr('d', createPath([
-      [hx, 0, hz],
-      [hx, 0, hz + houseD],
-      [hx, houseH, hz + houseD],
-      [hx, houseH, hz]
-    ]))
-    .attr('fill', '#e8e3dd')
-    .attr('stroke', '#bbb')
-    .attr('stroke-width', 0.5)
-
-  // Front wall
-  g.append('path')
-    .attr('d', createPath([
-      [hx, 0, hz + houseD],
-      [hx + houseW, 0, hz + houseD],
-      [hx + houseW, houseH, hz + houseD],
-      [hx, houseH, hz + houseD]
-    ]))
-    .attr('fill', '#f5f0ea')
-    .attr('stroke', '#bbb')
-    .attr('stroke-width', 0.5)
-
-  // Right wall
-  g.append('path')
-    .attr('d', createPath([
-      [hx + houseW, 0, hz + houseD],
-      [hx + houseW, 0, hz],
-      [hx + houseW, houseH, hz],
-      [hx + houseW, houseH, hz + houseD]
-    ]))
-    .attr('fill', '#e0dbd5')
-    .attr('stroke', '#bbb')
-    .attr('stroke-width', 0.5)
-
-  // Roof ridge line (center of house width)
-  const ridgeX = hx + houseW / 2
-  const ridgeY = houseH + roofH
-
-  // House roof - left slope (where dormer sits)
-  g.append('path')
-    .attr('d', createPath([
-      [hx - 5, houseH, hz - 5],
-      [hx - 5, houseH, hz + houseD + 5],
-      [ridgeX, ridgeY, hz + houseD + 5],
-      [ridgeX, ridgeY, hz - 5]
-    ]))
+  // Base roof color
+  roofGroup.append('polygon')
+    .attr('points', `${roofLeftX},${roofStartY} ${roofRightX},${roofStartY} ${roofRightX},${roofEndY} ${roofLeftX},${roofEndY}`)
     .attr('fill', roofColor.main)
-    .attr('stroke', roofColor.dark)
-    .attr('stroke-width', 0.5)
 
-  // House roof - right slope
-  g.append('path')
-    .attr('d', createPath([
-      [hx + houseW + 5, houseH, hz - 5],
-      [hx + houseW + 5, houseH, hz + houseD + 5],
-      [ridgeX, ridgeY, hz + houseD + 5],
-      [ridgeX, ridgeY, hz - 5]
-    ]))
-    .attr('fill', roofColor.dark)
-    .attr('stroke', roofColor.dark)
-    .attr('stroke-width', 0.5)
+  // Add roof tile lines for texture
+  const tileSpacing = 12
+  for (let y = roofStartY; y < roofEndY; y += tileSpacing) {
+    roofGroup.append('line')
+      .attr('x1', roofLeftX)
+      .attr('y1', y)
+      .attr('x2', roofRightX)
+      .attr('y2', y)
+      .attr('stroke', roofColor.dark)
+      .attr('stroke-width', 0.5)
+      .attr('opacity', 0.4)
+  }
 
-  // Roof front gable (triangle)
-  g.append('path')
-    .attr('d', createPath([
-      [hx - 5, houseH, hz + houseD + 5],
-      [hx + houseW + 5, houseH, hz + houseD + 5],
-      [ridgeX, ridgeY, hz + houseD + 5]
-    ]))
-    .attr('fill', roofColor.light)
-    .attr('stroke', roofColor.dark)
-    .attr('stroke-width', 0.5)
+  // Vertical tile shadows (staggered)
+  for (let row = 0; row < 20; row++) {
+    const y = roofStartY + row * tileSpacing
+    const offset = row % 2 === 0 ? 0 : 15
+    for (let x = roofLeftX + offset; x < roofRightX; x += 30) {
+      roofGroup.append('line')
+        .attr('x1', x)
+        .attr('y1', y)
+        .attr('x2', x)
+        .attr('y2', y + tileSpacing)
+        .attr('stroke', roofColor.dark)
+        .attr('stroke-width', 0.3)
+        .attr('opacity', 0.3)
+    }
+  }
 
   // === DORMER ===
-  // Place dormer on LEFT roof slope, centered
-  // The dormer sits at a point along the slope
+  const dormerWidth = dims.w
+  const dormerHeight = dims.h
+  const dormerX = (viewWidth - dormerWidth) / 2
+  const dormerY = roofStartY + 30
 
-  // Dormer center X position (on the left half of roof)
-  const dormerCenterX = hx + houseW * 0.25 // 1/4 from left edge
-  const dormerX = dormerCenterX - dims.w / 2
+  // Side cheek color
+  const cheekColor = d3.color(props.exteriorColor)?.darker(0.2)?.toString() || props.exteriorColor
 
-  // Dormer Z position (centered front-to-back on roof)
-  const dormerCenterZ = hz + houseD * 0.5
-  const dormerZ = dormerCenterZ - dims.d / 2
-
-  // Calculate Y at this X position on the roof slope
-  // Left slope goes from hx (at houseH) to ridgeX (at ridgeY)
-  const slopeProgress = (dormerCenterX - hx) / (ridgeX - hx)
-  const roofYAtDormer = houseH + slopeProgress * roofH
-
-  // Dormer base sits on roof
-  const dormerBaseY = roofYAtDormer - 2
-
-  // Dormer left wall (side, visible from this angle)
-  g.append('path')
-    .attr('d', createPath([
-      [dormerX, dormerBaseY, dormerZ],
-      [dormerX, dormerBaseY, dormerZ + dims.d],
-      [dormerX, dormerBaseY + dims.h, dormerZ + dims.d],
-      [dormerX, dormerBaseY + dims.h, dormerZ]
-    ]))
-    .attr('fill', d3.color(props.exteriorColor)?.darker(0.2)?.toString() || props.exteriorColor)
-    .attr('stroke', '#777')
+  // Left side cheek (angled trapezoid to show perspective)
+  const cheekWidth = 25
+  const leftCheekPoints = [
+    [dormerX, dormerY + dormerHeight],
+    [dormerX, dormerY],
+    [dormerX - cheekWidth, dormerY + 15],
+    [dormerX - cheekWidth, dormerY + dormerHeight + 10]
+  ]
+  g.append('polygon')
+    .attr('points', leftCheekPoints.map(p => p.join(',')).join(' '))
+    .attr('fill', cheekColor)
+    .attr('stroke', '#666')
     .attr('stroke-width', 0.5)
 
-  // Dormer front wall
-  g.append('path')
-    .attr('d', createPath([
-      [dormerX, dormerBaseY, dormerZ + dims.d],
-      [dormerX + dims.w, dormerBaseY, dormerZ + dims.d],
-      [dormerX + dims.w, dormerBaseY + dims.h, dormerZ + dims.d],
-      [dormerX, dormerBaseY + dims.h, dormerZ + dims.d]
-    ]))
+  // Right side cheek
+  const rightCheekPoints = [
+    [dormerX + dormerWidth, dormerY + dormerHeight],
+    [dormerX + dormerWidth, dormerY],
+    [dormerX + dormerWidth + cheekWidth, dormerY + 15],
+    [dormerX + dormerWidth + cheekWidth, dormerY + dormerHeight + 10]
+  ]
+  g.append('polygon')
+    .attr('points', rightCheekPoints.map(p => p.join(',')).join(' '))
+    .attr('fill', d3.color(cheekColor)?.darker(0.15)?.toString() || cheekColor)
+    .attr('stroke', '#666')
+    .attr('stroke-width', 0.5)
+
+  // Main front face
+  g.append('rect')
+    .attr('x', dormerX)
+    .attr('y', dormerY)
+    .attr('width', dormerWidth)
+    .attr('height', dormerHeight)
     .attr('fill', props.exteriorColor)
     .attr('stroke', '#777')
     .attr('stroke-width', 0.5)
 
-  // Dormer right wall
-  g.append('path')
-    .attr('d', createPath([
-      [dormerX + dims.w, dormerBaseY, dormerZ + dims.d],
-      [dormerX + dims.w, dormerBaseY, dormerZ],
-      [dormerX + dims.w, dormerBaseY + dims.h, dormerZ],
-      [dormerX + dims.w, dormerBaseY + dims.h, dormerZ + dims.d]
-    ]))
-    .attr('fill', d3.color(props.exteriorColor)?.darker(0.3)?.toString() || props.exteriorColor)
-    .attr('stroke', '#777')
-    .attr('stroke-width', 0.5)
+  // === ROOF (Flat or Pitched) ===
+  const fasciaHeight = 8
+  const roofOverhang = 8
 
-  // Dormer roof
-  const dormerRoofOverhang = 3
   if (dims.isFlat) {
-    // Flat roof - top surface
-    g.append('path')
-      .attr('d', createPath([
-        [dormerX - dormerRoofOverhang, dormerBaseY + dims.h + 3, dormerZ - dormerRoofOverhang],
-        [dormerX - dormerRoofOverhang, dormerBaseY + dims.h + 3, dormerZ + dims.d + dormerRoofOverhang],
-        [dormerX + dims.w + dormerRoofOverhang, dormerBaseY + dims.h + 3, dormerZ + dims.d + dormerRoofOverhang],
-        [dormerX + dims.w + dormerRoofOverhang, dormerBaseY + dims.h + 3, dormerZ - dormerRoofOverhang]
-      ]))
-      .attr('fill', '#3a3a3a')
-      .attr('stroke', '#222')
+    // Flat roof with sedum/green covering
+    // Top surface (visible from front - thin strip)
+    g.append('rect')
+      .attr('x', dormerX - roofOverhang - cheekWidth)
+      .attr('y', dormerY - fasciaHeight - 4)
+      .attr('width', dormerWidth + (roofOverhang + cheekWidth) * 2)
+      .attr('height', 5)
+      .attr('fill', 'url(#sedumGradient)')
+      .attr('stroke', '#4a6a4a')
       .attr('stroke-width', 0.5)
 
-    // Flat roof - front fascia
-    g.append('path')
-      .attr('d', createPath([
-        [dormerX - dormerRoofOverhang, dormerBaseY + dims.h, dormerZ + dims.d + dormerRoofOverhang],
-        [dormerX + dims.w + dormerRoofOverhang, dormerBaseY + dims.h, dormerZ + dims.d + dormerRoofOverhang],
-        [dormerX + dims.w + dormerRoofOverhang, dormerBaseY + dims.h + 3, dormerZ + dims.d + dormerRoofOverhang],
-        [dormerX - dormerRoofOverhang, dormerBaseY + dims.h + 3, dormerZ + dims.d + dormerRoofOverhang]
-      ]))
+    // Front fascia (prominent white band)
+    g.append('rect')
+      .attr('x', dormerX - roofOverhang)
+      .attr('y', dormerY - fasciaHeight)
+      .attr('width', dormerWidth + roofOverhang * 2)
+      .attr('height', fasciaHeight)
       .attr('fill', props.fasciaColor)
-      .attr('stroke', '#555')
+      .attr('stroke', '#ccc')
+      .attr('stroke-width', 0.5)
+
+    // Left fascia side
+    const leftFasciaPoints = [
+      [dormerX - roofOverhang, dormerY - fasciaHeight],
+      [dormerX - roofOverhang, dormerY],
+      [dormerX - roofOverhang - cheekWidth, dormerY + 15],
+      [dormerX - roofOverhang - cheekWidth, dormerY - fasciaHeight + 10]
+    ]
+    g.append('polygon')
+      .attr('points', leftFasciaPoints.map(p => p.join(',')).join(' '))
+      .attr('fill', d3.color(props.fasciaColor)?.darker(0.1)?.toString() || props.fasciaColor)
+      .attr('stroke', '#ccc')
+      .attr('stroke-width', 0.5)
+
+    // Right fascia side
+    const rightFasciaPoints = [
+      [dormerX + dormerWidth + roofOverhang, dormerY - fasciaHeight],
+      [dormerX + dormerWidth + roofOverhang, dormerY],
+      [dormerX + dormerWidth + roofOverhang + cheekWidth, dormerY + 15],
+      [dormerX + dormerWidth + roofOverhang + cheekWidth, dormerY - fasciaHeight + 10]
+    ]
+    g.append('polygon')
+      .attr('points', rightFasciaPoints.map(p => p.join(',')).join(' '))
+      .attr('fill', d3.color(props.fasciaColor)?.darker(0.15)?.toString() || props.fasciaColor)
+      .attr('stroke', '#ccc')
       .attr('stroke-width', 0.5)
   } else {
-    // Pitched dormer roof
-    const dormerRidgeX = dormerX + dims.w / 2
-    const dormerRidgeY = dormerBaseY + dims.h + dims.roofHeight
+    // Pitched/shingled dormer roof
+    const roofPeakY = dormerY - 35
+    const roofPeakX = dormerX + dormerWidth / 2
 
     // Left slope
-    g.append('path')
-      .attr('d', createPath([
-        [dormerX - dormerRoofOverhang, dormerBaseY + dims.h, dormerZ - dormerRoofOverhang],
-        [dormerX - dormerRoofOverhang, dormerBaseY + dims.h, dormerZ + dims.d + dormerRoofOverhang],
-        [dormerRidgeX, dormerRidgeY, dormerZ + dims.d + dormerRoofOverhang],
-        [dormerRidgeX, dormerRidgeY, dormerZ - dormerRoofOverhang]
-      ]))
+    g.append('polygon')
+      .attr('points', `
+        ${dormerX - roofOverhang - cheekWidth},${dormerY + 10}
+        ${roofPeakX},${roofPeakY}
+        ${roofPeakX},${roofPeakY}
+        ${dormerX - roofOverhang},${dormerY}
+      `)
       .attr('fill', roofColor.main)
       .attr('stroke', roofColor.dark)
       .attr('stroke-width', 0.5)
 
     // Right slope
-    g.append('path')
-      .attr('d', createPath([
-        [dormerX + dims.w + dormerRoofOverhang, dormerBaseY + dims.h, dormerZ - dormerRoofOverhang],
-        [dormerX + dims.w + dormerRoofOverhang, dormerBaseY + dims.h, dormerZ + dims.d + dormerRoofOverhang],
-        [dormerRidgeX, dormerRidgeY, dormerZ + dims.d + dormerRoofOverhang],
-        [dormerRidgeX, dormerRidgeY, dormerZ - dormerRoofOverhang]
-      ]))
+    g.append('polygon')
+      .attr('points', `
+        ${dormerX + dormerWidth + roofOverhang + cheekWidth},${dormerY + 10}
+        ${roofPeakX},${roofPeakY}
+        ${roofPeakX},${roofPeakY}
+        ${dormerX + dormerWidth + roofOverhang},${dormerY}
+      `)
       .attr('fill', roofColor.dark)
       .attr('stroke', roofColor.dark)
       .attr('stroke-width', 0.5)
 
-    // Front gable
-    g.append('path')
-      .attr('d', createPath([
-        [dormerX - dormerRoofOverhang, dormerBaseY + dims.h, dormerZ + dims.d + dormerRoofOverhang],
-        [dormerX + dims.w + dormerRoofOverhang, dormerBaseY + dims.h, dormerZ + dims.d + dormerRoofOverhang],
-        [dormerRidgeX, dormerRidgeY, dormerZ + dims.d + dormerRoofOverhang]
-      ]))
-      .attr('fill', roofColor.light)
+    // Front triangular gable
+    g.append('polygon')
+      .attr('points', `
+        ${dormerX - roofOverhang},${dormerY}
+        ${dormerX + dormerWidth + roofOverhang},${dormerY}
+        ${roofPeakX},${roofPeakY}
+      `)
+      .attr('fill', roofColor.highlight)
       .attr('stroke', roofColor.dark)
       .attr('stroke-width', 0.5)
   }
 
-  // Windows on front face
+  // === WINDOWS ===
   const windowCount = Math.max(activeElements.value.length, 1)
-  const windowPadding = 4
-  const windowGap = 2
-  const availableWidth = dims.w - windowPadding * 2
-  const windowW = Math.min(12, (availableWidth - (windowCount - 1) * windowGap) / windowCount)
-  const windowH = dims.h - 8
-  const totalWindowsW = windowCount * windowW + (windowCount - 1) * windowGap
-  const windowStartX = dormerX + windowPadding + (availableWidth - totalWindowsW) / 2
-  const windowY = dormerBaseY + 4
-  const windowZ = dormerZ + dims.d + 0.5
+  const framePadding = 12
+  const windowGap = 6
+  const frameWidth = 4
+
+  const availableWidth = dormerWidth - framePadding * 2
+  const totalGaps = (windowCount - 1) * windowGap
+  const windowWidth = (availableWidth - totalGaps) / windowCount
+  const windowHeight = dormerHeight - 16
+  const windowStartX = dormerX + framePadding
+  const windowY = dormerY + 8
 
   for (let i = 0; i < windowCount; i++) {
-    const wx = windowStartX + i * (windowW + windowGap)
+    const wx = windowStartX + i * (windowWidth + windowGap)
     const element = activeElements.value[i] || { type: 'raam' }
 
     if (element.type === 'tussenpaneel') {
-      g.append('path')
-        .attr('d', createPath([
-          [wx, windowY, windowZ],
-          [wx + windowW, windowY, windowZ],
-          [wx + windowW, windowY + windowH, windowZ],
-          [wx, windowY + windowH, windowZ]
-        ]))
+      // Solid panel instead of window
+      g.append('rect')
+        .attr('x', wx)
+        .attr('y', windowY)
+        .attr('width', windowWidth)
+        .attr('height', windowHeight)
         .attr('fill', props.exteriorColor)
         .attr('stroke', '#666')
-        .attr('stroke-width', 0.5)
+        .attr('stroke-width', 1)
     } else {
-      // Frame
-      g.append('path')
-        .attr('d', createPath([
-          [wx, windowY, windowZ],
-          [wx + windowW, windowY, windowZ],
-          [wx + windowW, windowY + windowH, windowZ],
-          [wx, windowY + windowH, windowZ]
-        ]))
+      // Window frame (outer)
+      g.append('rect')
+        .attr('x', wx)
+        .attr('y', windowY)
+        .attr('width', windowWidth)
+        .attr('height', windowHeight)
         .attr('fill', props.frameColor)
-        .attr('stroke', '#555')
+        .attr('stroke', '#aaa')
         .attr('stroke-width', 0.5)
+        .attr('rx', 1)
 
-      // Glass
-      g.append('path')
-        .attr('d', createPath([
-          [wx + 1, windowY + 1, windowZ + 0.5],
-          [wx + windowW - 1, windowY + 1, windowZ + 0.5],
-          [wx + windowW - 1, windowY + windowH - 1, windowZ + 0.5],
-          [wx + 1, windowY + windowH - 1, windowZ + 0.5]
-        ]))
-        .attr('fill', '#87ceeb')
-        .attr('fill-opacity', 0.75)
+      // Glass pane
+      g.append('rect')
+        .attr('x', wx + frameWidth)
+        .attr('y', windowY + frameWidth)
+        .attr('width', windowWidth - frameWidth * 2)
+        .attr('height', windowHeight - frameWidth * 2)
+        .attr('fill', 'url(#glassGradient)')
+        .attr('rx', 1)
 
-      // Glass highlight
-      g.append('path')
-        .attr('d', createPath([
-          [wx + 1.5, windowY + 1.5, windowZ + 1],
-          [wx + windowW * 0.4, windowY + 1.5, windowZ + 1],
-          [wx + windowW * 0.4, windowY + windowH * 0.5, windowZ + 1],
-          [wx + 1.5, windowY + windowH * 0.5, windowZ + 1]
-        ]))
+      // Glass reflection highlight
+      g.append('rect')
+        .attr('x', wx + frameWidth + 2)
+        .attr('y', windowY + frameWidth + 2)
+        .attr('width', (windowWidth - frameWidth * 2) * 0.3)
+        .attr('height', (windowHeight - frameWidth * 2) * 0.4)
         .attr('fill', '#fff')
-        .attr('fill-opacity', 0.25)
+        .attr('opacity', 0.2)
+        .attr('rx', 1)
 
-      // Draai-kiepraam center divider
+      // Draai-kiepraam: vertical divider
       if (element.type === 'draai-kiepraam') {
-        const midX = wx + windowW / 2
-        const [p1x, p1y] = isoProject(midX, windowY + 1, windowZ + 0.5)
-        const [p2x, p2y] = isoProject(midX, windowY + windowH - 1, windowZ + 0.5)
+        const midX = wx + windowWidth / 2
         g.append('line')
-          .attr('x1', p1x).attr('y1', p1y)
-          .attr('x2', p2x).attr('y2', p2y)
+          .attr('x1', midX)
+          .attr('y1', windowY + frameWidth)
+          .attr('x2', midX)
+          .attr('y2', windowY + windowHeight - frameWidth)
           .attr('stroke', props.frameColor)
-          .attr('stroke-width', 1)
+          .attr('stroke-width', frameWidth - 1)
+
+        // Handle indicator
+        g.append('circle')
+          .attr('cx', midX - windowWidth * 0.2)
+          .attr('cy', windowY + windowHeight / 2)
+          .attr('r', 2)
+          .attr('fill', '#888')
       }
     }
   }
 
-  // Model decorations
+  // === MODEL DECORATIONS ===
   if (props.model === 'kader') {
-    // Vertical pillars on sides
-    const pillarW = 3
-    g.append('path')
-      .attr('d', createPath([
-        [dormerX - pillarW, dormerBaseY - 1, dormerZ + dims.d + 0.5],
-        [dormerX, dormerBaseY - 1, dormerZ + dims.d + 0.5],
-        [dormerX, dormerBaseY + dims.h + 1, dormerZ + dims.d + 0.5],
-        [dormerX - pillarW, dormerBaseY + dims.h + 1, dormerZ + dims.d + 0.5]
-      ]))
+    // Decorative frame pillars on sides
+    const pillarWidth = 6
+
+    // Left pillar
+    g.append('rect')
+      .attr('x', dormerX - pillarWidth)
+      .attr('y', dormerY)
+      .attr('width', pillarWidth)
+      .attr('height', dormerHeight)
       .attr('fill', props.fasciaColor)
-      .attr('stroke', '#555')
+      .attr('stroke', '#aaa')
       .attr('stroke-width', 0.5)
 
-    g.append('path')
-      .attr('d', createPath([
-        [dormerX + dims.w, dormerBaseY - 1, dormerZ + dims.d + 0.5],
-        [dormerX + dims.w + pillarW, dormerBaseY - 1, dormerZ + dims.d + 0.5],
-        [dormerX + dims.w + pillarW, dormerBaseY + dims.h + 1, dormerZ + dims.d + 0.5],
-        [dormerX + dims.w, dormerBaseY + dims.h + 1, dormerZ + dims.d + 0.5]
-      ]))
+    // Right pillar
+    g.append('rect')
+      .attr('x', dormerX + dormerWidth)
+      .attr('y', dormerY)
+      .attr('width', pillarWidth)
+      .attr('height', dormerHeight)
       .attr('fill', props.fasciaColor)
-      .attr('stroke', '#555')
+      .attr('stroke', '#aaa')
+      .attr('stroke-width', 0.5)
+
+    // Bottom sill
+    g.append('rect')
+      .attr('x', dormerX - pillarWidth)
+      .attr('y', dormerY + dormerHeight)
+      .attr('width', dormerWidth + pillarWidth * 2)
+      .attr('height', 4)
+      .attr('fill', props.fasciaColor)
+      .attr('stroke', '#aaa')
       .attr('stroke-width', 0.5)
   }
 
   if (props.model === 'klassiek' && !dims.isFlat) {
-    const dormerRidgeX = dormerX + dims.w / 2
-    const dormerRidgeY = dormerBaseY + dims.h + dims.roofHeight
+    // Classical ornament on gable peak
+    const roofPeakX = dormerX + dormerWidth / 2
+    const roofPeakY = dormerY - 35
 
-    g.append('path')
-      .attr('d', createPath([
-        [dormerRidgeX - 4, dormerRidgeY - 8, dormerZ + dims.d + dormerRoofOverhang + 1],
-        [dormerRidgeX + 4, dormerRidgeY - 8, dormerZ + dims.d + dormerRoofOverhang + 1],
-        [dormerRidgeX, dormerRidgeY - 2, dormerZ + dims.d + dormerRoofOverhang + 1]
-      ]))
+    g.append('polygon')
+      .attr('points', `
+        ${roofPeakX - 8},${roofPeakY + 5}
+        ${roofPeakX + 8},${roofPeakY + 5}
+        ${roofPeakX},${roofPeakY - 8}
+      `)
       .attr('fill', props.fasciaColor)
-      .attr('stroke', '#555')
+      .attr('stroke', '#aaa')
       .attr('stroke-width', 0.5)
   }
+
+  // === BLURRY FOREGROUND TREES ===
+  const treeGroup = g.append('g')
+    .attr('filter', 'url(#treeBlur)')
+
+  // Left tree cluster
+  drawTree(treeGroup, 30, viewHeight - 20, 60, '#3a6a3a')
+  drawTree(treeGroup, 50, viewHeight - 10, 50, '#2d5a2d')
+  drawTree(treeGroup, 10, viewHeight - 5, 40, '#4a7a4a')
+
+  // Right tree cluster
+  drawTree(treeGroup, viewWidth - 40, viewHeight - 15, 55, '#3a6a3a')
+  drawTree(treeGroup, viewWidth - 20, viewHeight - 5, 45, '#2d5a2d')
+  drawTree(treeGroup, viewWidth - 60, viewHeight - 10, 50, '#4a7a4a')
+
+  // Additional scattered foliage/leaves in foreground (fixed positions)
+  const foliagePositions = [
+    { x: 70, y: viewHeight - 8, size: 25, r: 60, g: 110, b: 60 },
+    { x: 120, y: viewHeight - 5, size: 20, r: 55, g: 100, b: 55 },
+    { x: viewWidth - 80, y: viewHeight - 12, size: 28, r: 65, g: 115, b: 60 },
+    { x: viewWidth - 130, y: viewHeight - 6, size: 22, r: 50, g: 105, b: 50 },
+    { x: viewWidth / 2 - 60, y: viewHeight - 3, size: 18, r: 58, g: 108, b: 55 },
+    { x: viewWidth / 2 + 70, y: viewHeight - 4, size: 20, r: 62, g: 112, b: 58 }
+  ]
+
+  foliagePositions.forEach(pos => {
+    treeGroup.append('ellipse')
+      .attr('cx', pos.x)
+      .attr('cy', pos.y)
+      .attr('rx', pos.size)
+      .attr('ry', pos.size * 0.6)
+      .attr('fill', `rgb(${pos.r}, ${pos.g}, ${pos.b})`)
+      .attr('opacity', 0.7)
+  })
+}
+
+// Helper function to draw a simple tree shape
+function drawTree(parent: d3.Selection<SVGGElement, unknown, null, undefined>, x: number, baseY: number, height: number, color: string) {
+  // Tree trunk
+  parent.append('rect')
+    .attr('x', x - 3)
+    .attr('y', baseY - height * 0.3)
+    .attr('width', 6)
+    .attr('height', height * 0.4)
+    .attr('fill', '#5a4a3a')
+
+  // Foliage (multiple ellipses)
+  const foliageColor = d3.color(color)
+
+  parent.append('ellipse')
+    .attr('cx', x)
+    .attr('cy', baseY - height * 0.5)
+    .attr('rx', height * 0.4)
+    .attr('ry', height * 0.35)
+    .attr('fill', foliageColor?.toString() || color)
+
+  parent.append('ellipse')
+    .attr('cx', x - height * 0.15)
+    .attr('cy', baseY - height * 0.6)
+    .attr('rx', height * 0.3)
+    .attr('ry', height * 0.25)
+    .attr('fill', foliageColor?.darker(0.2)?.toString() || color)
+
+  parent.append('ellipse')
+    .attr('cx', x + height * 0.15)
+    .attr('cy', baseY - height * 0.65)
+    .attr('rx', height * 0.25)
+    .attr('ry', height * 0.2)
+    .attr('fill', foliageColor?.brighter(0.1)?.toString() || color)
 }
 
 onMounted(() => {
@@ -458,7 +513,7 @@ watch(
   <svg
     ref="svgRef"
     class="dormer-svg"
-    viewBox="0 0 300 200"
+    viewBox="0 0 400 280"
     xmlns="http://www.w3.org/2000/svg"
     preserveAspectRatio="xMidYMid meet"
   />
