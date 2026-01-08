@@ -7,7 +7,7 @@ const store = useConfiguratorStore()
 // Step configuration - could be moved to constants file if needed elsewhere
 const STEPS = [
   { number: 1, label: 'Model' },
-  { number: 2, label: 'Afmetingen' },
+  { number: 2, label: 'Formaat' },
   { number: 3, label: 'Materialen' },
   { number: 4, label: 'Kleuren' },
   { number: 5, label: 'Gegevens' }

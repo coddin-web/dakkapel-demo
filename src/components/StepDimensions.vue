@@ -58,7 +58,7 @@ function moveElementDown(position: number) {
 
 <template>
   <div class="step-dimensions">
-    <h2 class="step-title">Stap 2: Afmetingen</h2>
+    <h2 class="step-title">Stap 2: Formaat</h2>
     <p class="step-description">
       Voer de gewenste afmetingen in en bepaal welke elementen in de dakkapel komen.
     </p>
