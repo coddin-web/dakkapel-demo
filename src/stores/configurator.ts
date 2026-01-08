@@ -57,8 +57,11 @@ export const useConfiguratorStore = defineStore('configurator', () => {
   const width = ref(300)
   const height = ref(150)
   const roofAngle = ref(45)
+  // Initial elements: 3 windows for default 300cm width
   const elements = ref<DormerElement[]>([
-    { position: 0, type: 'raam' }
+    { position: 0, type: 'raam' },
+    { position: 1, type: 'raam' },
+    { position: 2, type: 'raam' }
   ])
 
   // Step 3: Materials
@@ -82,6 +85,11 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     postalCode: '',
     city: '',
     remarks: ''
+  })
+
+  // Computed: Minimum number of elements based on width (every ~70cm needs an element)
+  const minElements = computed(() => {
+    return Math.max(1, Math.ceil(width.value / 100))
   })
 
   // Computed: Maximum number of elements based on width
@@ -182,6 +190,10 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     if (elements.value.length > maxElements.value) {
       elements.value = elements.value.slice(0, maxElements.value)
     }
+    // Add elements if below minimum
+    while (elements.value.length < minElements.value) {
+      elements.value.push({ position: elements.value.length, type: 'raam' })
+    }
   }
 
   function setHeight(value: number) {
@@ -200,6 +212,9 @@ export const useConfiguratorStore = defineStore('configurator', () => {
   }
 
   function removeElement(position: number) {
+    // Don't remove if at minimum
+    if (elements.value.length <= minElements.value) return
+
     elements.value = elements.value.filter(el => el.position !== position)
     // Reindex positions
     elements.value.forEach((el, index) => {
@@ -321,6 +336,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     TOTAL_STEPS,
 
     // Computed
+    minElements,
     maxElements,
     windowCount,
     priceBreakdown,

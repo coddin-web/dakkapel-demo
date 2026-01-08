@@ -104,7 +104,7 @@ function moveElementDown(position: number) {
         Elementen
         <span class="form-hint">
           Voeg elementen toe aan uw dakkapel.
-          Bij huidige breedte zijn maximaal {{ store.maxElements }} elementen mogelijk.
+          Bij huidige breedte: minimaal {{ store.minElements }}, maximaal {{ store.maxElements }} elementen.
         </span>
       </label>
 
@@ -143,6 +143,7 @@ function moveElementDown(position: number) {
           <button
             type="button"
             class="element-remove-btn"
+            :disabled="store.elements.length <= store.minElements"
             aria-label="Verwijder element"
             @click="handleRemoveElement(element.position)"
           >
@@ -273,9 +274,14 @@ function moveElementDown(position: number) {
   transition: all 0.15s ease;
 }
 
-.element-remove-btn:hover {
+.element-remove-btn:hover:not(:disabled) {
   background: #fee2e2;
   color: #dc2626;
+}
+
+.element-remove-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 
 .add-element-btn {

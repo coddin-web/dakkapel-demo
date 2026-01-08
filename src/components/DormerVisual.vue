@@ -9,6 +9,8 @@ const props = defineProps<{
   fasciaColor: string
   elements: DormerElement[]
   model: DormerModel
+  width: number
+  height: number
 }>()
 
 // Visual constants
@@ -23,15 +25,58 @@ const activeElements = computed(() =>
   props.elements.filter(el => el.type !== 'geen')
 )
 
+// Scale dormer dimensions based on selected width/height
+// Base reference: 300cm width = 180px dormer width, 150cm height = 57px dormer height
+const dormerLayout = computed(() => {
+  // Scale width: 150-1200cm maps to dormer width 90-220px (within 300px viewBox)
+  const minW = 90, maxW = 220
+  const widthRatio = (props.width - 150) / (1200 - 150)
+  const dormerWidth = minW + widthRatio * (maxW - minW)
+
+  // Scale height: 100-200cm maps to dormer body height 38-76px
+  const minH = 38, maxH = 76
+  const heightRatio = (props.height - 100) / (200 - 100)
+  const dormerHeight = minH + heightRatio * (maxH - minH)
+
+  // Center the dormer horizontally
+  const dormerX = (300 - dormerWidth) / 2
+
+  // Roof peak adjusts based on height
+  const roofPeakY = 85 - dormerHeight - 27
+  const dormerTopY = 85 - dormerHeight + 5
+
+  return {
+    width: dormerWidth,
+    height: dormerHeight,
+    x: dormerX,
+    topY: dormerTopY,
+    bodyY: 85,
+    roofPeakY,
+    bottomY: 85 + 57 // Fixed bottom position for house roof alignment
+  }
+})
+
 // Calculate window positions dynamically
 const windowLayout = computed(() => {
   const count = Math.max(activeElements.value.length, 1)
-  const totalWidth = 160
+  const d = dormerLayout.value
+  const padding = 10
+  const totalWidth = d.width - padding * 2
   const gap = 6
-  const windowWidth = Math.min(45, (totalWidth - (count - 1) * gap) / count)
-  const startX = 70 + (totalWidth - (count * windowWidth + (count - 1) * gap)) / 2
 
-  return { count, windowWidth, gap, startX }
+  // Max window width ~70cm equivalent (capped at 35px in visual)
+  const maxWindowWidth = 35
+  const calculatedWidth = (totalWidth - (count - 1) * gap) / count
+  const windowWidth = Math.min(maxWindowWidth, calculatedWidth)
+
+  // Center windows if they don't fill the full width
+  const totalWindowsWidth = count * windowWidth + (count - 1) * gap
+  const startX = d.x + padding + (totalWidth - totalWindowsWidth) / 2
+
+  // Window height scales with dormer height
+  const windowHeight = Math.max(30, d.height - 15)
+
+  return { count, windowWidth, windowHeight, gap, startX }
 })
 
 function getWindowX(index: number): number {
@@ -97,46 +142,46 @@ function getWindowX(index: number): number {
       <!-- Dormer mini roof -->
       <polygon
         :fill="fasciaColor"
-        points="55,82 150,55 245,82"
+        :points="`${dormerLayout.x - 5},${dormerLayout.bodyY - 3} 150,${dormerLayout.roofPeakY} ${dormerLayout.x + dormerLayout.width + 5},${dormerLayout.bodyY - 3}`"
       />
       <polygon
         fill="#000"
         opacity="0.1"
-        points="55,82 150,55 150,82"
+        :points="`${dormerLayout.x - 5},${dormerLayout.bodyY - 3} 150,${dormerLayout.roofPeakY} 150,${dormerLayout.bodyY - 3}`"
       />
 
       <!-- Model decorations -->
       <g v-if="model === 'kader'">
-        <rect x="55" y="82" width="8" height="60" :fill="fasciaColor" />
-        <rect x="237" y="82" width="8" height="60" :fill="fasciaColor" />
+        <rect :x="dormerLayout.x - 5" :y="dormerLayout.bodyY - 3" width="8" :height="dormerLayout.height + 6" :fill="fasciaColor" />
+        <rect :x="dormerLayout.x + dormerLayout.width - 3" :y="dormerLayout.bodyY - 3" width="8" :height="dormerLayout.height + 6" :fill="fasciaColor" />
       </g>
 
       <g v-if="model === 'klassiek'">
-        <rect x="143" y="58" width="14" height="24" :fill="fasciaColor" />
-        <polygon points="140,58 150,48 160,58" :fill="fasciaColor" />
+        <rect x="143" :y="dormerLayout.roofPeakY + 3" width="14" height="24" :fill="fasciaColor" />
+        <polygon :points="`140,${dormerLayout.roofPeakY + 3} 150,${dormerLayout.roofPeakY - 7} 160,${dormerLayout.roofPeakY + 3}`" :fill="fasciaColor" />
       </g>
 
       <g v-if="model === 'nokverhoging'">
-        <polygon :fill="roofHex" points="110,55 150,30 190,55" />
-        <polygon fill="#000" opacity="0.1" points="110,55 150,30 150,55" />
+        <polygon :fill="roofHex" :points="`${dormerLayout.x + 20},${dormerLayout.roofPeakY} 150,${dormerLayout.roofPeakY - 25} ${dormerLayout.x + dormerLayout.width - 20},${dormerLayout.roofPeakY}`" />
+        <polygon fill="#000" opacity="0.1" :points="`${dormerLayout.x + 20},${dormerLayout.roofPeakY} 150,${dormerLayout.roofPeakY - 25} 150,${dormerLayout.roofPeakY}`" />
       </g>
 
       <!-- Main dormer body -->
       <rect
-        x="60"
-        y="85"
-        width="180"
-        height="57"
+        :x="dormerLayout.x"
+        :y="dormerLayout.bodyY"
+        :width="dormerLayout.width"
+        :height="dormerLayout.height"
         fill="url(#bodyGradient)"
         rx="1"
       />
 
       <!-- Top fascia -->
-      <rect x="55" y="80" width="190" height="6" :fill="fasciaColor" rx="1" />
+      <rect :x="dormerLayout.x - 5" :y="dormerLayout.bodyY - 5" :width="dormerLayout.width + 10" height="6" :fill="fasciaColor" rx="1" />
 
       <!-- Side trims -->
-      <rect x="55" y="80" width="6" height="62" :fill="fasciaColor" />
-      <rect x="239" y="80" width="6" height="62" :fill="fasciaColor" />
+      <rect :x="dormerLayout.x - 5" :y="dormerLayout.bodyY - 5" width="6" :height="dormerLayout.height + 8" :fill="fasciaColor" />
+      <rect :x="dormerLayout.x + dormerLayout.width - 1" :y="dormerLayout.bodyY - 5" width="6" :height="dormerLayout.height + 8" :fill="fasciaColor" />
 
       <!-- Windows -->
       <g class="windows">
@@ -145,27 +190,27 @@ function getWindowX(index: number): number {
           <g v-if="element.type === 'raam' || element.type === 'draai-kiepraam'">
             <rect
               :x="getWindowX(index)"
-              y="92"
+              :y="dormerLayout.bodyY + 7"
               :width="windowLayout.windowWidth"
-              height="42"
+              :height="windowLayout.windowHeight"
               :fill="frameColor"
               rx="1"
             />
             <!-- Glass pane -->
             <rect
               :x="getWindowX(index) + 3"
-              y="95"
+              :y="dormerLayout.bodyY + 10"
               :width="windowLayout.windowWidth - 6"
-              height="36"
+              :height="windowLayout.windowHeight - 6"
               fill="url(#glassGradient)"
               rx="1"
             />
             <!-- Glass reflection -->
             <rect
               :x="getWindowX(index) + 3"
-              y="95"
+              :y="dormerLayout.bodyY + 10"
               :width="windowLayout.windowWidth - 6"
-              height="36"
+              :height="windowLayout.windowHeight - 6"
               fill="url(#skyReflection)"
               rx="1"
             />
@@ -173,15 +218,15 @@ function getWindowX(index: number): number {
             <g v-if="element.type === 'draai-kiepraam'">
               <line
                 :x1="getWindowX(index) + windowLayout.windowWidth / 2"
-                y1="95"
+                :y1="dormerLayout.bodyY + 10"
                 :x2="getWindowX(index) + windowLayout.windowWidth / 2"
-                y2="131"
+                :y2="dormerLayout.bodyY + windowLayout.windowHeight"
                 :stroke="frameColor"
                 stroke-width="2"
               />
               <rect
                 :x="getWindowX(index) + windowLayout.windowWidth / 2 + 4"
-                y="110"
+                :y="dormerLayout.bodyY + windowLayout.windowHeight / 2"
                 width="4"
                 height="8"
                 fill="#666"
@@ -194,9 +239,9 @@ function getWindowX(index: number): number {
           <g v-else-if="element.type === 'tussenpaneel'">
             <rect
               :x="getWindowX(index)"
-              y="92"
+              :y="dormerLayout.bodyY + 7"
               :width="windowLayout.windowWidth"
-              height="42"
+              :height="windowLayout.windowHeight"
               :fill="exteriorColor"
               stroke="#00000020"
               stroke-width="1"
@@ -207,14 +252,14 @@ function getWindowX(index: number): number {
 
         <!-- Default single window if none selected -->
         <g v-if="activeElements.length === 0">
-          <rect x="120" y="92" width="60" height="42" :fill="frameColor" rx="1" />
-          <rect x="123" y="95" width="54" height="36" fill="url(#glassGradient)" rx="1" />
-          <rect x="123" y="95" width="54" height="36" fill="url(#skyReflection)" rx="1" />
+          <rect :x="150 - 30" :y="dormerLayout.bodyY + 7" width="60" :height="windowLayout.windowHeight" :fill="frameColor" rx="1" />
+          <rect :x="150 - 27" :y="dormerLayout.bodyY + 10" width="54" :height="windowLayout.windowHeight - 6" fill="url(#glassGradient)" rx="1" />
+          <rect :x="150 - 27" :y="dormerLayout.bodyY + 10" width="54" :height="windowLayout.windowHeight - 6" fill="url(#skyReflection)" rx="1" />
         </g>
       </g>
 
       <!-- Bottom sill -->
-      <rect x="55" y="140" width="190" height="4" :fill="fasciaColor" rx="1" />
+      <rect :x="dormerLayout.x - 5" :y="dormerLayout.bodyY + dormerLayout.height - 2" :width="dormerLayout.width + 10" height="4" :fill="fasciaColor" rx="1" />
     </g>
   </svg>
 </template>

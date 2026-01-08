@@ -70,6 +70,8 @@ function getFasciaHex(): string {
         :fascia-color="getFasciaHex()"
         :elements="store.elements"
         :model="store.dormerModel"
+        :width="store.width"
+        :height="store.height"
       />
     </div>
 
