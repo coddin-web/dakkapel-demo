@@ -1,50 +1,73 @@
 <script setup lang="ts">
-import { useConfiguratorStore } from '@/stores/configurator'
+import { computed } from 'vue'
+import { useConfiguratorStore, PRICING, DEFAULTS } from '@/stores/configurator'
 import type { PanelMaterial, FrameMaterial } from '@/types'
 
 const store = useConfiguratorStore()
 
-const panelMaterials: { value: PanelMaterial; label: string; description: string; price: string }[] = [
+interface MaterialOption<T> {
+  value: T
+  label: string
+  description: string
+}
+
+const panelMaterials: MaterialOption<PanelMaterial>[] = [
   {
     value: 'gladde-plaat',
     label: 'Gladde plaat',
-    description: 'Strakke, gladde afwerking voor een moderne uitstraling.',
-    price: 'Inbegrepen'
+    description: 'Strakke, gladde afwerking voor een moderne uitstraling.'
   },
   {
     value: 'keraliet',
     label: 'Keraliet',
-    description: 'Duurzaam plaatmateriaal met een licht gestructureerd oppervlak.',
-    price: '+ € 800,-'
+    description: 'Duurzaam plaatmateriaal met een licht gestructureerd oppervlak.'
   },
   {
     value: 'zink',
     label: 'Zink met felsbanen',
-    description: 'Hoogwaardige afwerking met zichtbare felsnaden voor een ambachtelijke uitstraling.',
-    price: '+ € 2.500,-'
+    description: 'Hoogwaardige afwerking met zichtbare felsnaden voor een ambachtelijke uitstraling.'
   },
   {
     value: 'hout',
     label: 'Hout',
-    description: 'Warme, natuurlijke uitstraling. Vereist periodiek onderhoud.',
-    price: '+ € 1.200,-'
+    description: 'Warme, natuurlijke uitstraling. Vereist periodiek onderhoud.'
   }
 ]
 
-const frameMaterials: { value: FrameMaterial; label: string; description: string; price: string }[] = [
+const frameMaterials: MaterialOption<FrameMaterial>[] = [
   {
     value: 'kunststof',
     label: 'Kunststof',
-    description: 'Onderhoudsarm en duurzaam. De meest gekozen optie.',
-    price: 'Inbegrepen'
+    description: 'Onderhoudsarm en duurzaam. De meest gekozen optie.'
   },
   {
     value: 'hout',
     label: 'Hout',
-    description: 'Klassieke uitstraling maar vereist meer onderhoud.',
-    price: '+ € 3.500,-'
+    description: 'Klassieke uitstraling maar vereist meer onderhoud.'
   }
 ]
+
+function getPanelPrice(value: PanelMaterial): string {
+  const price = PRICING.PANEL_MATERIALS[value]
+  return price === 0 ? 'Inbegrepen' : `+ ${store.formatPrice(price)}`
+}
+
+function getFramePrice(value: FrameMaterial): string {
+  const price = PRICING.FRAME_MATERIALS[value]
+  return price === 0 ? 'Inbegrepen' : `+ ${store.formatPrice(price)}`
+}
+
+function isDefaultPanelMaterial(value: PanelMaterial): boolean {
+  return value === DEFAULTS.PANEL_MATERIAL
+}
+
+function isDefaultFrameMaterial(value: FrameMaterial): boolean {
+  return value === DEFAULTS.FRAME_MATERIAL
+}
+
+const rolluikenPrice = computed(() => {
+  return store.windowCount * PRICING.ROLLUIK_PRICE_PER_WINDOW
+})
 
 function handleKeydown(event: KeyboardEvent, callback: () => void) {
   if (event.key === 'Enter' || event.key === ' ') {
@@ -74,7 +97,7 @@ function handleKeydown(event: KeyboardEvent, callback: () => void) {
           :class="{ selected: store.panelMaterial === material.value }"
           role="radio"
           :aria-checked="store.panelMaterial === material.value"
-          :aria-label="`${material.label}: ${material.description} - ${material.price}`"
+          :aria-label="`${material.label}: ${material.description} - ${getPanelPrice(material.value)}`"
           tabindex="0"
           @click="store.setPanelMaterial(material.value)"
           @keydown="handleKeydown($event, () => store.setPanelMaterial(material.value))"
@@ -83,9 +106,9 @@ function handleKeydown(event: KeyboardEvent, callback: () => void) {
             <span class="model-card-title">{{ material.label }}</span>
             <span
               class="model-card-price"
-              :class="{ included: material.value === 'gladde-plaat' }"
+              :class="{ included: isDefaultPanelMaterial(material.value) }"
             >
-              {{ material.price }}
+              {{ getPanelPrice(material.value) }}
             </span>
           </div>
           <p class="model-card-description">{{ material.description }}</p>
@@ -98,7 +121,7 @@ function handleKeydown(event: KeyboardEvent, callback: () => void) {
         Kozijnen
         <span class="form-hint">Het materiaal voor de raamkozijnen</span>
       </label>
-      <div class="option-cards" style="grid-template-columns: repeat(2, 1fr);" role="radiogroup" aria-labelledby="frame-material-label">
+      <div class="option-cards frame-cards-grid" role="radiogroup" aria-labelledby="frame-material-label">
         <div
           v-for="material in frameMaterials"
           :key="material.value"
@@ -106,7 +129,7 @@ function handleKeydown(event: KeyboardEvent, callback: () => void) {
           :class="{ selected: store.frameMaterial === material.value }"
           role="radio"
           :aria-checked="store.frameMaterial === material.value"
-          :aria-label="`${material.label}: ${material.description} - ${material.price}`"
+          :aria-label="`${material.label}: ${material.description} - ${getFramePrice(material.value)}`"
           tabindex="0"
           @click="store.setFrameMaterial(material.value)"
           @keydown="handleKeydown($event, () => store.setFrameMaterial(material.value))"
@@ -115,9 +138,9 @@ function handleKeydown(event: KeyboardEvent, callback: () => void) {
           <p class="frame-description">{{ material.description }}</p>
           <span
             class="option-card-price"
-            :class="{ 'option-card-included': material.value === 'kunststof' }"
+            :class="{ 'option-card-included': isDefaultFrameMaterial(material.value) }"
           >
-            {{ material.price }}
+            {{ getFramePrice(material.value) }}
           </span>
         </div>
       </div>
@@ -150,7 +173,7 @@ function handleKeydown(event: KeyboardEvent, callback: () => void) {
           :class="{ selected: store.hasRolluiken }"
           role="radio"
           :aria-checked="store.hasRolluiken"
-          :aria-label="`Rolluiken bij alle ramen - ${store.formatPrice(store.windowCount * 650)}`"
+          :aria-label="`Rolluiken bij alle ramen - ${store.formatPrice(rolluikenPrice)}`"
           tabindex="0"
           @click="store.setHasRolluiken(true)"
           @keydown="handleKeydown($event, () => store.setHasRolluiken(true))"
@@ -158,7 +181,7 @@ function handleKeydown(event: KeyboardEvent, callback: () => void) {
           <strong>Ja</strong>
           <p class="toggle-description">Rolluiken bij alle ramen</p>
           <span class="toggle-price">
-            + {{ store.formatPrice(store.windowCount * 650) }}
+            + {{ store.formatPrice(rolluikenPrice) }}
           </span>
         </div>
       </div>
@@ -167,6 +190,10 @@ function handleKeydown(event: KeyboardEvent, callback: () => void) {
 </template>
 
 <style scoped>
+.frame-cards-grid {
+  grid-template-columns: repeat(2, 1fr);
+}
+
 .frame-card {
   padding: 20px;
   text-align: left;
@@ -206,5 +233,11 @@ function handleKeydown(event: KeyboardEvent, callback: () => void) {
 .option-card:focus:not(:focus-visible),
 .toggle-option:focus:not(:focus-visible) {
   outline: none;
+}
+
+@media (max-width: 480px) {
+  .frame-cards-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

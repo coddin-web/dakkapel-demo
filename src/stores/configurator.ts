@@ -11,19 +11,33 @@ import type {
   PriceBreakdown
 } from '@/types'
 
-// Pricing constants
-const BASE_PRICE = 16380
-const MODEL_SURCHARGE = 9000
-const WIDTH_PRICE_PER_CM = 46 // €46 per cm above 200cm
-const HEIGHT_PRICE_PER_CM = 30 // €30 per cm above 120cm
-const DRAAI_KIEPRAAM_SURCHARGE = 350
-const TUSSENPANEEL_SURCHARGE = 150
-const KERALIET_SURCHARGE = 800
-const ZINK_SURCHARGE = 2500
-const HOUT_PANEL_SURCHARGE = 1200
-const HOUT_FRAME_SURCHARGE = 3500
-const ROLLUIK_PRICE_PER_WINDOW = 650
-const CUSTOM_COLOR_SURCHARGE = 450
+// Pricing constants - exported for use in components
+export const PRICING = {
+  BASE_PRICE: 16380,
+  MODEL_SURCHARGE: 9000,
+  WIDTH_PRICE_PER_CM: 46,
+  HEIGHT_PRICE_PER_CM: 30,
+  DRAAI_KIEPRAAM_SURCHARGE: 350,
+  TUSSENPANEEL_SURCHARGE: 150,
+  PANEL_MATERIALS: {
+    'gladde-plaat': 0,
+    'keraliet': 800,
+    'zink': 2500,
+    'hout': 1200
+  },
+  FRAME_MATERIALS: {
+    'kunststof': 0,
+    'hout': 3500
+  },
+  ROLLUIK_PRICE_PER_WINDOW: 650,
+  CUSTOM_COLOR_SURCHARGE: 450
+} as const
+
+// Default values
+export const DEFAULTS = {
+  PANEL_MATERIAL: 'gladde-plaat' as const,
+  FRAME_MATERIAL: 'kunststof' as const
+}
 
 export const useConfiguratorStore = defineStore('configurator', () => {
   // Current step
@@ -75,52 +89,41 @@ export const useConfiguratorStore = defineStore('configurator', () => {
   // Computed: Price breakdown
   const priceBreakdown = computed<PriceBreakdown>(() => {
     // Base price
-    const base = BASE_PRICE
+    const base = PRICING.BASE_PRICE
 
     // Model surcharge
-    const model = dormerModel.value !== 'standaard' ? MODEL_SURCHARGE : 0
+    const model = dormerModel.value !== 'standaard' ? PRICING.MODEL_SURCHARGE : 0
 
-    // Width surcharge (€46 per cm above 200cm)
-    const widthSurcharge = width.value > 200 ? (width.value - 200) * WIDTH_PRICE_PER_CM : 0
+    // Width surcharge
+    const widthSurcharge = width.value > 200 ? (width.value - 200) * PRICING.WIDTH_PRICE_PER_CM : 0
 
-    // Height surcharge (€30 per cm above 120cm)
-    const heightSurcharge = height.value > 120 ? (height.value - 120) * HEIGHT_PRICE_PER_CM : 0
+    // Height surcharge
+    const heightSurcharge = height.value > 120 ? (height.value - 120) * PRICING.HEIGHT_PRICE_PER_CM : 0
 
     // Elements surcharge
     let elementsSurcharge = 0
     elements.value.forEach(el => {
       if (el.type === 'draai-kiepraam') {
-        elementsSurcharge += DRAAI_KIEPRAAM_SURCHARGE
+        elementsSurcharge += PRICING.DRAAI_KIEPRAAM_SURCHARGE
       } else if (el.type === 'tussenpaneel') {
-        elementsSurcharge += TUSSENPANEEL_SURCHARGE
+        elementsSurcharge += PRICING.TUSSENPANEEL_SURCHARGE
       }
     })
 
     // Panel material surcharge
-    let panelSurcharge = 0
-    switch (panelMaterial.value) {
-      case 'keraliet':
-        panelSurcharge = KERALIET_SURCHARGE
-        break
-      case 'zink':
-        panelSurcharge = ZINK_SURCHARGE
-        break
-      case 'hout':
-        panelSurcharge = HOUT_PANEL_SURCHARGE
-        break
-    }
+    const panelSurcharge = PRICING.PANEL_MATERIALS[panelMaterial.value]
 
     // Frame material surcharge
-    const frameSurcharge = frameMaterial.value === 'hout' ? HOUT_FRAME_SURCHARGE : 0
+    const frameSurcharge = PRICING.FRAME_MATERIALS[frameMaterial.value]
 
     // Rolluiken
-    const rolluikenSurcharge = hasRolluiken.value ? windowCount.value * ROLLUIK_PRICE_PER_WINDOW : 0
+    const rolluikenSurcharge = hasRolluiken.value ? windowCount.value * PRICING.ROLLUIK_PRICE_PER_WINDOW : 0
 
     // Custom colors surcharge
     let colorSurcharge = 0
-    if (frameColor.value.type === 'anders') colorSurcharge += CUSTOM_COLOR_SURCHARGE
-    if (exteriorColor.value.type === 'anders') colorSurcharge += CUSTOM_COLOR_SURCHARGE
-    if (fasciaColor.value.type === 'anders') colorSurcharge += CUSTOM_COLOR_SURCHARGE
+    if (frameColor.value.type === 'anders') colorSurcharge += PRICING.CUSTOM_COLOR_SURCHARGE
+    if (exteriorColor.value.type === 'anders') colorSurcharge += PRICING.CUSTOM_COLOR_SURCHARGE
+    if (fasciaColor.value.type === 'anders') colorSurcharge += PRICING.CUSTOM_COLOR_SURCHARGE
 
     const total =
       base +

@@ -15,6 +15,7 @@ const emit = defineEmits<{
 }>()
 
 const inputId = computed(() => `dimension-${props.label.toLowerCase().replace(/\s+/g, '-')}`)
+const stepValue = computed(() => props.step ?? 1)
 
 function handleInput(event: Event) {
   const target = event.target as HTMLInputElement
@@ -22,12 +23,6 @@ function handleInput(event: Event) {
 
   if (!Number.isNaN(value)) {
     emit('update:modelValue', value)
-  }
-}
-
-function handleKeydown(event: KeyboardEvent) {
-  if (event.key === 'Enter' || event.key === ' ') {
-    (event.target as HTMLElement).click?.()
   }
 }
 </script>
@@ -43,12 +38,12 @@ function handleKeydown(event: KeyboardEvent) {
         :value="modelValue"
         :min="min"
         :max="max"
+        :step="stepValue"
         :aria-label="label"
         :aria-valuemin="min"
         :aria-valuemax="max"
         :aria-valuenow="modelValue"
         @input="handleInput"
-        @keydown="handleKeydown"
       />
       <span class="input-suffix" aria-hidden="true">{{ suffix }}</span>
     </div>
@@ -58,7 +53,7 @@ function handleKeydown(event: KeyboardEvent) {
       :value="modelValue"
       :min="min"
       :max="max"
-      :step="step ?? 1"
+      :step="stepValue"
       :aria-label="`${label} slider`"
       :aria-valuemin="min"
       :aria-valuemax="max"
