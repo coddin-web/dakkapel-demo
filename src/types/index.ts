@@ -2,6 +2,8 @@ export type RoofColor = 'zwart' | 'oranje-rood'
 
 export type DormerModel = 'standaard' | 'kader' | 'klassiek' | 'nokverhoging'
 
+export type DormerRoofType = 'plat' | 'schuin'
+
 export type ElementType = 'geen' | 'raam' | 'draai-kiepraam' | 'tussenpaneel'
 
 export type PanelMaterial = 'gladde-plaat' | 'keraliet' | 'zink' | 'hout'
@@ -23,6 +25,7 @@ export interface CustomColor {
 export interface PriceBreakdown {
   base: number
   model: number
+  dormerRoof: number
   width: number
   height: number
   elements: number
@@ -48,6 +51,11 @@ export const MODEL_LABELS: Record<DormerModel, string> = {
   'kader': 'Kadermodel',
   'klassiek': 'Klassiek model',
   'nokverhoging': 'Nokverhoging'
+}
+
+export const DORMER_ROOF_LABELS: Record<DormerRoofType, string> = {
+  'plat': 'Plat dak',
+  'schuin': 'Schuin dak (pannendak)'
 }
 
 export const ELEMENT_LABELS: Record<ElementType, string> = {

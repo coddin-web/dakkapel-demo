@@ -22,6 +22,9 @@ const priceBreakdownItems = computed(() => {
   if (breakdown.model > 0) {
     items.push({ label: 'Modelkeuze', value: breakdown.model })
   }
+  if (breakdown.dormerRoof > 0) {
+    items.push({ label: 'Daktype dakkapel', value: breakdown.dormerRoof })
+  }
   if (breakdown.width > 0) {
     items.push({ label: 'Breedte toeslag', value: breakdown.width })
   }
@@ -70,6 +73,7 @@ function getFasciaHex(): string {
         :fascia-color="getFasciaHex()"
         :elements="store.elements"
         :model="store.dormerModel"
+        :dormer-roof-type="store.dormerRoofType"
         :width="store.width"
         :height="store.height"
       />

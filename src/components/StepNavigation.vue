@@ -86,16 +86,32 @@ function handleKeydown(event: KeyboardEvent, stepNumber: number) {
 <style scoped>
 .step-list {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 8px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   list-style: none;
   margin: 0 0 30px;
-  padding: 0;
+  padding: 0 16px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.step-list::-webkit-scrollbar {
+  display: none;
 }
 
 .step-item {
   display: contents;
+}
+
+.step-nav-item {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.step-connector {
+  flex-shrink: 0;
 }
 
 .step-nav-item:focus {
@@ -107,15 +123,16 @@ function handleKeydown(event: KeyboardEvent, stepNumber: number) {
   outline: none;
 }
 
-/* Mobile: Hide connectors and show compact view */
+/* Mobile: Ensure horizontal scroll works */
 @media (max-width: 768px) {
   .step-list {
     gap: 4px;
-    margin: 0;
+    margin: 0 0 20px;
+    padding: 8px 12px;
   }
 
   .step-connector {
-    display: none;
+    flex-shrink: 0;
   }
 
   .step-nav-item {
@@ -123,6 +140,8 @@ function handleKeydown(event: KeyboardEvent, stepNumber: number) {
     font-size: 0.75rem;
     gap: 4px;
     border-width: 1.5px;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
 
   .step-label {
@@ -132,7 +151,7 @@ function handleKeydown(event: KeyboardEvent, stepNumber: number) {
 
 @media (max-width: 400px) {
   .step-nav-item {
-    padding: 4px 6px;
+    padding: 4px 8px;
     font-size: 0.7rem;
   }
 }

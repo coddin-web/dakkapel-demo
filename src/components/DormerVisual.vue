@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { RoofColor, DormerModel, DormerElement } from '@/types'
+import type { RoofColor, DormerModel, DormerRoofType, DormerElement } from '@/types'
 
 const props = defineProps<{
   roofColor: RoofColor
@@ -9,6 +9,7 @@ const props = defineProps<{
   fasciaColor: string
   elements: DormerElement[]
   model: DormerModel
+  dormerRoofType: DormerRoofType
   width: number
   height: number
 }>()
@@ -41,18 +42,30 @@ const dormerLayout = computed(() => {
   // Center the dormer horizontally
   const dormerX = (300 - dormerWidth) / 2
 
-  // Roof peak adjusts based on height
-  const roofPeakY = 85 - dormerHeight - 27
-  const dormerTopY = 85 - dormerHeight + 5
+  // House roof peak is at y=50. Dormer must be below unless nokverhoging.
+  // Position dormer body to sit on house roof slope
+  const bodyY = 90
+
+  // For flat roof: simple horizontal top
+  // For schuin roof: sloped roof matching house
+  const isFlat = props.dormerRoofType === 'plat'
+  const isNokverhoging = props.model === 'nokverhoging'
+
+  // Roof peak Y - for nokverhoging it can go above house peak
+  let roofPeakY = bodyY - (isFlat ? 8 : 30)
+  if (isNokverhoging) {
+    roofPeakY = 35 // Above house roof peak
+  }
 
   return {
     width: dormerWidth,
     height: dormerHeight,
     x: dormerX,
-    topY: dormerTopY,
-    bodyY: 85,
+    bodyY,
     roofPeakY,
-    bottomY: 85 + 57 // Fixed bottom position for house roof alignment
+    isFlat,
+    isNokverhoging,
+    bottomY: bodyY + dormerHeight
   }
 })
 
@@ -139,31 +152,91 @@ function getWindowX(index: number): number {
     <!-- Dormer structure -->
     <g filter="url(#dropShadow)">
 
-      <!-- Dormer mini roof -->
-      <polygon
-        :fill="fasciaColor"
-        :points="`${dormerLayout.x - 5},${dormerLayout.bodyY - 3} 150,${dormerLayout.roofPeakY} ${dormerLayout.x + dormerLayout.width + 5},${dormerLayout.bodyY - 3}`"
-      />
-      <polygon
-        fill="#000"
-        opacity="0.1"
-        :points="`${dormerLayout.x - 5},${dormerLayout.bodyY - 3} 150,${dormerLayout.roofPeakY} 150,${dormerLayout.bodyY - 3}`"
-      />
+      <!-- Dormer roof - Flat type -->
+      <g v-if="dormerLayout.isFlat && !dormerLayout.isNokverhoging">
+        <!-- Flat roof with slight overhang -->
+        <rect
+          :x="dormerLayout.x - 8"
+          :y="dormerLayout.bodyY - 10"
+          :width="dormerLayout.width + 16"
+          height="8"
+          :fill="fasciaColor"
+          rx="1"
+        />
+        <!-- Roof surface (dark) -->
+        <rect
+          :x="dormerLayout.x - 5"
+          :y="dormerLayout.bodyY - 12"
+          :width="dormerLayout.width + 10"
+          height="4"
+          fill="#444"
+          rx="1"
+        />
+      </g>
 
-      <!-- Model decorations -->
+      <!-- Dormer roof - Shingled type -->
+      <g v-if="!dormerLayout.isFlat && !dormerLayout.isNokverhoging">
+        <!-- Sloped roof with tiles -->
+        <polygon
+          :fill="roofHex"
+          :points="`${dormerLayout.x - 5},${dormerLayout.bodyY - 3} 150,${dormerLayout.roofPeakY} ${dormerLayout.x + dormerLayout.width + 5},${dormerLayout.bodyY - 3}`"
+        />
+        <!-- Roof shadow -->
+        <polygon
+          fill="#000"
+          opacity="0.15"
+          :points="`${dormerLayout.x - 5},${dormerLayout.bodyY - 3} 150,${dormerLayout.roofPeakY} 150,${dormerLayout.bodyY - 3}`"
+        />
+        <!-- Tile lines for shingled roof -->
+        <g stroke="#000" stroke-opacity="0.1" stroke-width="1">
+          <line
+            :x1="dormerLayout.x + 10"
+            :y1="dormerLayout.bodyY - 10"
+            :x2="dormerLayout.x + dormerLayout.width - 10"
+            :y2="dormerLayout.bodyY - 10"
+          />
+          <line
+            :x1="dormerLayout.x + 25"
+            :y1="dormerLayout.bodyY - 18"
+            :x2="dormerLayout.x + dormerLayout.width - 25"
+            :y2="dormerLayout.bodyY - 18"
+          />
+        </g>
+      </g>
+
+      <!-- Model decorations - Nokverhoging -->
+      <g v-if="dormerLayout.isNokverhoging">
+        <!-- Extended roof above house peak -->
+        <polygon
+          :fill="roofHex"
+          :points="`${dormerLayout.x - 5},${dormerLayout.bodyY - 3} 150,${dormerLayout.roofPeakY} ${dormerLayout.x + dormerLayout.width + 5},${dormerLayout.bodyY - 3}`"
+        />
+        <polygon
+          fill="#000"
+          opacity="0.15"
+          :points="`${dormerLayout.x - 5},${dormerLayout.bodyY - 3} 150,${dormerLayout.roofPeakY} 150,${dormerLayout.bodyY - 3}`"
+        />
+        <!-- Ridge cap -->
+        <line
+          x1="150"
+          :y1="dormerLayout.roofPeakY"
+          x2="150"
+          :y2="dormerLayout.roofPeakY + 15"
+          stroke="#555"
+          stroke-width="3"
+        />
+      </g>
+
+      <!-- Model decorations - Kader -->
       <g v-if="model === 'kader'">
         <rect :x="dormerLayout.x - 5" :y="dormerLayout.bodyY - 3" width="8" :height="dormerLayout.height + 6" :fill="fasciaColor" />
         <rect :x="dormerLayout.x + dormerLayout.width - 3" :y="dormerLayout.bodyY - 3" width="8" :height="dormerLayout.height + 6" :fill="fasciaColor" />
       </g>
 
-      <g v-if="model === 'klassiek'">
-        <rect x="143" :y="dormerLayout.roofPeakY + 3" width="14" height="24" :fill="fasciaColor" />
-        <polygon :points="`140,${dormerLayout.roofPeakY + 3} 150,${dormerLayout.roofPeakY - 7} 160,${dormerLayout.roofPeakY + 3}`" :fill="fasciaColor" />
-      </g>
-
-      <g v-if="model === 'nokverhoging'">
-        <polygon :fill="roofHex" :points="`${dormerLayout.x + 20},${dormerLayout.roofPeakY} 150,${dormerLayout.roofPeakY - 25} ${dormerLayout.x + dormerLayout.width - 20},${dormerLayout.roofPeakY}`" />
-        <polygon fill="#000" opacity="0.1" :points="`${dormerLayout.x + 20},${dormerLayout.roofPeakY} 150,${dormerLayout.roofPeakY - 25} 150,${dormerLayout.roofPeakY}`" />
+      <!-- Model decorations - Klassiek -->
+      <g v-if="model === 'klassiek' && !dormerLayout.isFlat">
+        <rect x="143" :y="dormerLayout.roofPeakY + 3" width="14" height="20" :fill="fasciaColor" />
+        <polygon :points="`140,${dormerLayout.roofPeakY + 3} 150,${dormerLayout.roofPeakY - 5} 160,${dormerLayout.roofPeakY + 3}`" :fill="fasciaColor" />
       </g>
 
       <!-- Main dormer body -->

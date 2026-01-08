@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import type {
   RoofColor,
   DormerModel,
+  DormerRoofType,
   ElementType,
   PanelMaterial,
   FrameMaterial,
@@ -19,6 +20,10 @@ export const PRICING = {
     'kader': 6000,
     'klassiek': 7500,
     'nokverhoging': 12000
+  } as const,
+  DORMER_ROOF_SURCHARGES: {
+    'plat': 0,
+    'schuin': 2500
   } as const,
   WIDTH_PRICE_PER_CM: 46,
   HEIGHT_PRICE_PER_CM: 30,
@@ -52,6 +57,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
   // Step 1: Model
   const roofColor = ref<RoofColor>('oranje-rood')
   const dormerModel = ref<DormerModel>('standaard')
+  const dormerRoofType = ref<DormerRoofType>('plat')
 
   // Step 2: Dimensions
   const width = ref(300)
@@ -118,6 +124,9 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     // Model surcharge
     const model = PRICING.MODEL_SURCHARGES[dormerModel.value]
 
+    // Dormer roof surcharge
+    const dormerRoof = PRICING.DORMER_ROOF_SURCHARGES[dormerRoofType.value]
+
     // Width surcharge
     const widthSurcharge = width.value > 200 ? (width.value - 200) * PRICING.WIDTH_PRICE_PER_CM : 0
 
@@ -152,6 +161,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     const total =
       base +
       model +
+      dormerRoof +
       widthSurcharge +
       heightSurcharge +
       elementsSurcharge +
@@ -163,6 +173,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     return {
       base,
       model,
+      dormerRoof,
       width: widthSurcharge,
       height: heightSurcharge,
       elements: elementsSurcharge,
@@ -181,6 +192,10 @@ export const useConfiguratorStore = defineStore('configurator', () => {
 
   function setDormerModel(model: DormerModel) {
     dormerModel.value = model
+  }
+
+  function setDormerRoofType(roofType: DormerRoofType) {
+    dormerRoofType.value = roofType
   }
 
   function setWidth(value: number) {
@@ -321,6 +336,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     completedSteps,
     roofColor,
     dormerModel,
+    dormerRoofType,
     width,
     height,
     roofAngle,
@@ -343,6 +359,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     // Actions
     setRoofColor,
     setDormerModel,
+    setDormerRoofType,
     setWidth,
     setHeight,
     setRoofAngle,

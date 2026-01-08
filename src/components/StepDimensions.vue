@@ -7,6 +7,10 @@ import DimensionInput from '@/components/DimensionInput.vue'
 const store = useConfiguratorStore()
 
 const showAddPopup = ref(false)
+const showEditPopup = ref(false)
+const editingPosition = ref<number | null>(null)
+const draggedPosition = ref<number | null>(null)
+const dragOverPosition = ref<number | null>(null)
 
 const addableElementTypes: { value: ElementType; label: string; description: string }[] = [
   { value: 'raam', label: 'Raam (vast)', description: 'Een vast raam voor maximaal lichtinval' },
@@ -39,6 +43,23 @@ function handleAddElement(type: ElementType) {
   closeAddPopup()
 }
 
+function openEditPopup(position: number) {
+  editingPosition.value = position
+  showEditPopup.value = true
+}
+
+function closeEditPopup() {
+  showEditPopup.value = false
+  editingPosition.value = null
+}
+
+function handleChangeElementType(type: ElementType) {
+  if (editingPosition.value !== null) {
+    store.setElementType(editingPosition.value, type)
+    closeEditPopup()
+  }
+}
+
 function handleRemoveElement(position: number) {
   store.removeElement(position)
 }
@@ -53,6 +74,41 @@ function moveElementDown(position: number) {
   if (position < store.elements.length - 1) {
     store.reorderElements(position, position + 1)
   }
+}
+
+// Drag and drop handlers
+function handleDragStart(event: DragEvent, position: number) {
+  draggedPosition.value = position
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move'
+    event.dataTransfer.setData('text/plain', position.toString())
+  }
+}
+
+function handleDragOver(event: DragEvent, position: number) {
+  event.preventDefault()
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = 'move'
+  }
+  dragOverPosition.value = position
+}
+
+function handleDragLeave() {
+  dragOverPosition.value = null
+}
+
+function handleDrop(event: DragEvent, targetPosition: number) {
+  event.preventDefault()
+  if (draggedPosition.value !== null && draggedPosition.value !== targetPosition) {
+    store.reorderElements(draggedPosition.value, targetPosition)
+  }
+  draggedPosition.value = null
+  dragOverPosition.value = null
+}
+
+function handleDragEnd() {
+  draggedPosition.value = null
+  dragOverPosition.value = null
 }
 </script>
 
@@ -113,6 +169,16 @@ function moveElementDown(position: number) {
           v-for="element in store.elements"
           :key="element.position"
           class="element-item"
+          :class="{
+            'element-dragging': draggedPosition === element.position,
+            'element-drag-over': dragOverPosition === element.position && draggedPosition !== element.position
+          }"
+          draggable="true"
+          @dragstart="handleDragStart($event, element.position)"
+          @dragover="handleDragOver($event, element.position)"
+          @dragleave="handleDragLeave"
+          @drop="handleDrop($event, element.position)"
+          @dragend="handleDragEnd"
         >
           <div class="element-reorder">
             <button
@@ -120,7 +186,7 @@ function moveElementDown(position: number) {
               class="reorder-btn"
               :disabled="element.position === 0"
               aria-label="Omhoog"
-              @click="moveElementUp(element.position)"
+              @click.stop="moveElementUp(element.position)"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M18 15l-6-6-6 6" />
@@ -131,21 +197,33 @@ function moveElementDown(position: number) {
               class="reorder-btn"
               :disabled="element.position === store.elements.length - 1"
               aria-label="Omlaag"
-              @click="moveElementDown(element.position)"
+              @click.stop="moveElementDown(element.position)"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M6 9l6 6 6-6" />
               </svg>
             </button>
           </div>
-          <span class="element-number">{{ element.position + 1 }}</span>
-          <span class="element-name">{{ ELEMENT_LABELS[element.type] }}</span>
+          <div
+            class="element-info"
+            role="button"
+            tabindex="0"
+            @click="openEditPopup(element.position)"
+            @keydown.enter="openEditPopup(element.position)"
+          >
+            <span class="element-number">{{ element.position + 1 }}</span>
+            <span class="element-name">{{ ELEMENT_LABELS[element.type] }}</span>
+            <svg class="element-edit-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+            </svg>
+          </div>
           <button
             type="button"
             class="element-remove-btn"
             :disabled="store.elements.length <= store.minElements"
             aria-label="Verwijder element"
-            @click="handleRemoveElement(element.position)"
+            @click.stop="handleRemoveElement(element.position)"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M18 6L6 18M6 6l12 12" />
@@ -192,6 +270,33 @@ function moveElementDown(position: number) {
         </div>
       </div>
     </div>
+
+    <!-- Edit Element Popup -->
+    <div v-if="showEditPopup" class="popup-overlay" @click="closeEditPopup">
+      <div class="popup-content" @click.stop>
+        <div class="popup-header">
+          <h3>Element wijzigen</h3>
+          <button type="button" class="popup-close" @click="closeEditPopup" aria-label="Sluiten">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div class="popup-options">
+          <button
+            v-for="elementType in addableElementTypes"
+            :key="elementType.value"
+            type="button"
+            class="popup-option"
+            :class="{ 'popup-option-selected': store.elements.find(e => e.position === editingPosition)?.type === elementType.value }"
+            @click="handleChangeElementType(elementType.value)"
+          >
+            <span class="popup-option-label">{{ elementType.label }}</span>
+            <span class="popup-option-desc">{{ elementType.description }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -217,6 +322,22 @@ function moveElementDown(position: number) {
   background: var(--white);
   border: 1px solid var(--gray-200);
   border-radius: var(--radius);
+  cursor: grab;
+  transition: all 0.15s ease;
+}
+
+.element-item:active {
+  cursor: grabbing;
+}
+
+.element-item.element-dragging {
+  opacity: 0.5;
+  background: var(--gray-100);
+}
+
+.element-item.element-drag-over {
+  border-color: var(--primary-color);
+  background: var(--secondary-color);
 }
 
 .element-reorder {
@@ -245,6 +366,31 @@ function moveElementDown(position: number) {
   cursor: not-allowed;
 }
 
+.element-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  padding: 4px 8px;
+  margin: -4px 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.element-info:hover {
+  background: var(--secondary-color);
+}
+
+.element-info:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.element-info:focus:not(:focus-visible) {
+  outline: none;
+}
+
 .element-number {
   width: 24px;
   height: 24px;
@@ -262,6 +408,16 @@ function moveElementDown(position: number) {
 .element-name {
   flex: 1;
   font-weight: 500;
+}
+
+.element-edit-icon {
+  color: var(--gray-400);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.element-info:hover .element-edit-icon {
+  opacity: 1;
 }
 
 .element-remove-btn {
@@ -379,6 +535,12 @@ function moveElementDown(position: number) {
 
 .popup-option:hover {
   background: var(--secondary-color);
+}
+
+.popup-option-selected {
+  background: var(--secondary-color);
+  border-left: 3px solid var(--primary-color);
+  padding-left: 17px;
 }
 
 .popup-option-label {
