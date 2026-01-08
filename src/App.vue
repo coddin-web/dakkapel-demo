@@ -29,35 +29,35 @@ function requestQuote() {
         <StepDimensions v-if="store.currentStep === 2" />
         <StepMaterials v-if="store.currentStep === 3" />
         <StepColors v-if="store.currentStep === 4" />
-
-        <div class="btn-group">
-          <button
-            v-if="store.currentStep > 1"
-            class="btn btn-secondary"
-            @click="store.previousStep()"
-          >
-            Vorige
-          </button>
-          <button
-            v-if="store.currentStep < 4"
-            class="btn btn-primary"
-            @click="store.nextStep()"
-          >
-            Volgende
-          </button>
-          <button
-            v-if="store.currentStep === 4"
-            class="btn btn-accent"
-            @click="requestQuote"
-          >
-            Vraag offerte aan
-          </button>
-        </div>
       </main>
 
       <aside class="preview-panel">
         <PreviewPanel />
       </aside>
+    </div>
+
+    <div class="btn-group">
+      <button
+        v-if="store.currentStep > 1"
+        class="btn btn-secondary"
+        @click="store.previousStep()"
+      >
+        Vorige
+      </button>
+      <button
+        v-if="store.currentStep < 4"
+        class="btn btn-primary"
+        @click="store.nextStep()"
+      >
+        Volgende
+      </button>
+      <button
+        v-if="store.currentStep === 4"
+        class="btn btn-accent"
+        @click="requestQuote"
+      >
+        Vraag offerte aan
+      </button>
     </div>
   </div>
 </template>
