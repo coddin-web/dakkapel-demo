@@ -84,6 +84,12 @@ function handleKeydown(event: KeyboardEvent, stepNumber: number) {
 </template>
 
 <style scoped>
+.step-nav {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
 .step-list {
   display: flex;
   justify-content: flex-start;
