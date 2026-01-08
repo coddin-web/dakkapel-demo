@@ -1,10 +1,17 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useConfiguratorStore } from '@/stores/configurator'
 import { RAL_COLORS } from '@/types'
 import DormerVisual from '@/components/DormerVisual.vue'
 
 const store = useConfiguratorStore()
+
+// Use Vue ref for breakdown expanded state instead of DOM manipulation
+const isBreakdownExpanded = ref(false)
+
+function toggleBreakdown() {
+  isBreakdownExpanded.value = !isBreakdownExpanded.value
+}
 
 const priceBreakdownItems = computed(() => {
   const breakdown = store.priceBreakdown
@@ -74,10 +81,18 @@ function getFasciaHex(): string {
       <div class="preview-price-note">Incl. BTW en plaatsing</div>
     </div>
 
-    <div class="preview-breakdown">
-      <div class="breakdown-header" @click="($event.currentTarget as HTMLElement).parentElement?.classList.toggle('expanded')">
+    <div class="preview-breakdown" :class="{ expanded: isBreakdownExpanded }">
+      <div
+        class="breakdown-header"
+        role="button"
+        tabindex="0"
+        :aria-expanded="isBreakdownExpanded"
+        @click="toggleBreakdown"
+        @keydown.enter="toggleBreakdown"
+        @keydown.space.prevent="toggleBreakdown"
+      >
         <span>Prijsopbouw</span>
-        <span class="breakdown-toggle">+</span>
+        <span class="breakdown-toggle" aria-hidden="true">{{ isBreakdownExpanded ? '−' : '+' }}</span>
       </div>
       <div class="breakdown-content">
         <div
@@ -120,6 +135,15 @@ function getFasciaHex(): string {
 
 .breakdown-header:hover {
   background-color: var(--secondary-color);
+}
+
+.breakdown-header:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: -2px;
+}
+
+.breakdown-header:focus:not(:focus-visible) {
+  outline: none;
 }
 
 .breakdown-toggle {
