@@ -33,13 +33,17 @@ const activeElements = computed(() =>
   props.elements.filter(el => el.type !== 'geen')
 )
 
-// Dormer dimensions based on props
+// Dormer dimensions based on props - width and height scale independently
 const dormerDims = computed(() => {
-  const scale = 0.7 + ((props.width - 150) / (1200 - 150)) * 0.6
+  // Width scales from 150cm to 1200cm -> 120px to 320px
+  const w = 120 + ((props.width - 150) / (1200 - 150)) * 200
+
+  // Height scales from 100cm to 200cm -> 70px to 110px
+  const h = 70 + ((props.height - 100) / (200 - 100)) * 40
+
   return {
-    scale,
-    width: 280 * scale,
-    height: 100 * scale,
+    width: w,
+    height: h,
     isFlat: props.dormerRoofType === 'plat'
   }
 })
