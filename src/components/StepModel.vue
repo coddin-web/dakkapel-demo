@@ -5,8 +5,8 @@ import type { RoofColor, DormerModel } from '@/types'
 const store = useConfiguratorStore()
 
 const roofColors: { value: RoofColor; label: string; hex: string }[] = [
-  { value: 'zwart', label: 'Zwart', hex: '#2c2c2c' },
-  { value: 'oranje-rood', label: 'Oranje-rood', hex: '#c45d35' }
+  { value: 'oranje-rood', label: 'Oranje-rood', hex: '#c45d35' },
+  { value: 'zwart', label: 'Zwart', hex: '#2c2c2c' }
 ]
 
 const models: { value: DormerModel; label: string; description: string; price: string }[] = [
@@ -62,7 +62,7 @@ const models: { value: DormerModel; label: string; description: string; price: s
             :style="{ backgroundColor: color.hex }"
           ></div>
           <span class="option-card-title">{{ color.label }}</span>
-          <span v-if="color.value === 'zwart'" class="option-card-included">Standaard</span>
+          <span v-if="color.value === 'oranje-rood'" class="option-card-included">Standaard</span>
         </div>
       </div>
     </div>

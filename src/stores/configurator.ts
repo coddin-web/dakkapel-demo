@@ -45,7 +45,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
   const completedSteps = ref<number[]>([])
 
   // Step 1: Model
-  const roofColor = ref<RoofColor>('zwart')
+  const roofColor = ref<RoofColor>('oranje-rood')
   const dormerModel = ref<DormerModel>('standaard')
 
   // Step 2: Dimensions
