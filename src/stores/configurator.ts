@@ -90,7 +90,10 @@ export const useConfiguratorStore = defineStore('configurator', () => {
     if (width.value < 300) return 3
     if (width.value < 400) return 5
     if (width.value < 500) return 6
-    return 7
+    if (width.value < 700) return 8
+    if (width.value < 900) return 10
+    if (width.value < 1100) return 12
+    return 14
   })
 
   // Count windows for rolluik pricing
@@ -174,7 +177,7 @@ export const useConfiguratorStore = defineStore('configurator', () => {
   }
 
   function setWidth(value: number) {
-    width.value = Math.max(150, Math.min(600, value))
+    width.value = Math.max(150, Math.min(1200, value))
     // Remove elements that exceed the new max
     if (elements.value.length > maxElements.value) {
       elements.value = elements.value.slice(0, maxElements.value)

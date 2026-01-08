@@ -71,7 +71,7 @@ function moveElementDown(position: number) {
           label="Breedte (cm)"
           :model-value="store.width"
           :min="150"
-          :max="600"
+          :max="1200"
           :step="10"
           suffix="cm"
           @update:model-value="updateWidth"
