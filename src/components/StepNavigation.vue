@@ -18,16 +18,13 @@ const stepStates = computed(() => {
   return STEPS.map(step => {
     const isCompleted = store.isStepCompleted(step.number)
     const isActive = store.currentStep === step.number
-    // Hide step 5 label until step >= 3, hide completed step labels unless active
-    const showLabel = (step.number !== 5 || store.currentStep >= 3) &&
-                      (!isCompleted || isActive)
     return {
       ...step,
       isActive,
       isCompleted,
       isAccessible: store.isStepAccessible(step.number),
       isDisabled: !store.isStepAccessible(step.number) && store.currentStep !== step.number,
-      showLabel
+      showLabel: true // Always show step labels
     }
   })
 })
@@ -91,7 +88,7 @@ function handleKeydown(event: KeyboardEvent, stepNumber: number) {
   gap: 6px;
   flex-wrap: nowrap;
   list-style: none;
-  margin: 0 0 8px;
+  margin: 0;
   padding: 0;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -124,7 +121,7 @@ function handleKeydown(event: KeyboardEvent, stepNumber: number) {
 @media (max-width: 768px) {
   .step-list {
     gap: 4px;
-    margin: 0 0 4px;
+    margin: 0;
     padding: 2px 4px;
   }
 

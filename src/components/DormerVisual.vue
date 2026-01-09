@@ -119,24 +119,24 @@ function drawVisualization() {
   const cheekW = 12
   const cheekColor = '#4D7A6A'
 
-  // Left cheek
+  // Left cheek - top extends outward
   dormerGroup.append('polygon')
     .attr('points', `
-      ${x - cheekW},${y}
+      ${x - cheekW},${y - 10}
       ${x},${y}
       ${x},${y + H}
-      ${x - cheekW},${y + H + 10}
+      ${x - cheekW},${y + H}
     `)
     .attr('fill', cheekColor)
     .attr('stroke', '#3D6A5A')
     .attr('stroke-width', 1)
 
-  // Right cheek
+  // Right cheek - top extends outward
   dormerGroup.append('polygon')
     .attr('points', `
       ${x + W},${y}
-      ${x + W + cheekW},${y}
-      ${x + W + cheekW},${y + H + 10}
+      ${x + W + cheekW},${y - 10}
+      ${x + W + cheekW},${y + H}
       ${x + W},${y + H}
     `)
     .attr('fill', cheekColor)
@@ -209,9 +209,8 @@ function drawVisualization() {
   const remainingW = availableW - (draaiKiepCount * draaiKiepW)
   const flexW = flexCount > 0 ? remainingW / flexCount : 0
 
-  // Calculate max window height based on narrowest window
-  const minWindowW = draaiKiepCount > 0 ? Math.min(draaiKiepW, flexW || draaiKiepW) : flexW
-  const windowH = Math.min(minWindowW * 1.8, H - topPad * 2)
+  // Windows always use full available height
+  const windowH = H - topPad * 2
   const windowY = y + (H - windowH) / 2
 
   // Track x position as we draw

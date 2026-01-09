@@ -121,11 +121,6 @@ function closeResult() {
 
 <template>
   <div class="configurator">
-    <header class="configurator-header">
-      <h1>Wiko Dakkapel Configurator</h1>
-      <p>Stel uw ideale dakkapel samen in vier eenvoudige stappen</p>
-    </header>
-
     <StepNavigation />
 
     <div class="configurator-content">
